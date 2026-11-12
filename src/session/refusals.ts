@@ -49,7 +49,7 @@ export const REFUSAL_HINTS: Readonly<Record<string, string>> = {
     "A person must review this post in the Umbraco backoffice before it can be scheduled. Leave it as a draft, or submit it for approval if the site uses approvals.",
   "post.changed": "Someone changed this post since you read it. Get it again, then make your change.",
   "post.schedule_forbidden": "This user may save drafts only.",
-  "licence.pro_required": "This needs UmbSocial Pro, and the site isn't licensed.",
+  "licence.pro_required": "This needs UmbSocial Pro, and the site isn't licensed (its licence may have lapsed since this server started).",
   "rate.limited": "Too many requests. Wait a minute before trying again.",
   "post.not_found": "No post with that key that this user may read. Use list-posts.",
   "post.not_yours": "Without the Schedule permission, this user may change or delete only its own drafts.",
@@ -92,6 +92,16 @@ export const REFUSAL_HINTS: Readonly<Record<string, string>> = {
   "channel.unknown": "That channel has been removed, so nothing can be sent to it.",
   "post.sealed": "This post is sealed and can't be changed.",
   "campaign.unknown": "That campaign doesn't exist any more. Use list-campaigns.",
+  "schedule.past": "At needs an atUtc in the future.",
+  "field.required:note": "Returning a post needs a note saying what to change.",
+  "field.too_long:note": "The note can be at most 1000 characters.",
+  "template.not_found": "No template with that key. Use list-templates.",
+  "tag.not_found": "No tag with that key. Use list-tags.",
+  "tag.too_many": "A post can have at most 10 tags.",
+  "hashtag.not_found": "No hashtag group with that key. Use list-hashtags.",
+  "utm.field_locked": "The site sets this UTM field centrally, so a post can't change it. Leave it out.",
+  "utm.value_too_long": "A UTM value can be at most 100 characters.",
+  "short_links.too_many_keys": "Ask for the clicks of at most 200 posts at a time.",
 };
 
 function hintFor(code: string): string | undefined {

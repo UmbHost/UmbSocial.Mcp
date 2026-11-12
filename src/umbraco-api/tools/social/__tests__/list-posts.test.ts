@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { http, HttpResponse } from "msw";
 import { server } from "../../../../mocks/server.js";
-import { callTool } from "../../../../session/__tests__/helpers.js";
+import { callTool, EDITION_PATH, errorBody, UNLICENSED, USER_PATH } from "../../../../session/__tests__/helpers.js";
+import { clearSession, startSession } from "../../../../session/start-session.js";
 import listPosts from "../get/list-posts.js";
-import { API } from "./helpers/session.js";
+import { API, userWith } from "./helpers/session.js";
 import { manyPosts } from "./helpers/post-builder.js";
 
 const NOW = Date.parse("2026-11-12T12:00:00.000Z");
@@ -108,6 +109,34 @@ describe("list-posts", () => {
     await callTool(listPosts, { pageKey, pageCulture: "en-GB" });
 
     expect(query?.get("filters[content]")).toBe(`${pageKey}:en-GB`);
+  });
+
+  it("list_posts_filters_by_tag", async () => {
+    let query: URLSearchParams | undefined;
+    server.use(
+      http.get(`${API}/posts`, ({ request }) => {
+        query = new URL(request.url).searchParams;
+        return HttpResponse.json([]);
+      }),
+    );
+    const tagKey = "33333333-3333-4333-8333-333333333333";
+
+    await callTool(listPosts, { tagKey });
+
+    expect(query?.get("filters[tag]")).toBe(tagKey);
+  });
+
+  it("list_posts_refuses_a_tag_on_an_unlicensed_site_without_calling", async () => {
+    server.use(
+      http.get(USER_PATH, () => HttpResponse.json(userWith("View"))),
+      http.get(EDITION_PATH, () => HttpResponse.json(UNLICENSED)),
+    );
+    await startSession();
+
+    const body = errorBody(await callTool(listPosts, { tagKey: "33333333-3333-4333-8333-333333333333" })) as { codes: string[] };
+
+    clearSession();
+    expect(body.codes).toEqual(["licence.pro_required"]);
   });
 
   it("list_posts_count_call_leaves_out_newest_first", async () => {

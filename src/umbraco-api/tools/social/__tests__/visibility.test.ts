@@ -10,6 +10,7 @@ const WRITE_TOOLS = ["check-post", "create-campaign", "create-post", "delete-pos
 
 const names = (...verbs: string[]) =>
   toolsFor(collections, userWith(...verbs), DEFAULT_COLLECTION_CONFIG)
+    .filter((t) => t.collectionName === "social")
     .map((t) => t.tool.name)
     .sort();
 

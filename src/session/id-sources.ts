@@ -24,6 +24,7 @@ export const ID_SOURCES: Readonly<Record<string, string | readonly string[]>> = 
   tagKeys: "list-tags",
   hashtagGroupKey: "list-hashtags",
   shortLinkCode: "list-short-links",
+  documentTypeKey: "get-page-share",
   mediaKey: CMS_ID_TOOLS.media,
   documentKey: CMS_ID_TOOLS.document,
   pageKey: CMS_ID_TOOLS.document,

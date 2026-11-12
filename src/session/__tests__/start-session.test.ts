@@ -1,9 +1,10 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { http, HttpResponse } from "msw";
-import { DEFAULT_COLLECTION_CONFIG, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
+import { DEFAULT_COLLECTION_CONFIG } from "@umbraco-cms/mcp-server-sdk";
 import { server } from "../../mocks/server.js";
 import { collections } from "../../collections.js";
 import getSocialEdition from "../../umbraco-api/tools/social/get/get-social-edition.js";
+import listTemplates from "../../umbraco-api/tools/social-pro/get/list-templates.js";
 import { clearSession, NO_SECTION_MESSAGE, startSession, toolsFor } from "../start-session.js";
 import { currentEdition, gatePro } from "../edition.js";
 import { callTool, EDITION_PATH, LICENSED, UNLICENSED, USER_PATH } from "./helpers.js";
@@ -59,7 +60,7 @@ describe("the session at start-up", () => {
   });
 
   it("pro_tools_are_absent_when_unlicensed", async () => {
-    const proTool = { name: "list-templates" } as ToolDefinition;
+    const proTool = listTemplates;
 
     expect(gatePro([proTool], UNLICENSED)).toEqual([]);
     expect(gatePro([proTool], LICENSED)).toEqual([proTool]);

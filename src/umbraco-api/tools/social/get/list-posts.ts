@@ -4,14 +4,21 @@
  */
 
 import { z } from "zod";
-import { createToolResult, trimArrayResponse, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
+import {
+  createToolResult,
+  trimArrayResponse,
+  UmbracoApiError,
+  withStandardDecorators,
+  type ToolDefinition,
+} from "@umbraco-cms/mcp-server-sdk";
 import {
   PostStatus,
   type ListPostsParams,
   type PostCountResponse,
   type PostResponse,
 } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { currentEdition } from "../../../../session/edition.js";
+import { callSocial, REFUSAL_HINTS } from "../../../../session/refusals.js";
 import { READ_POST } from "../../../../session/social-user.js";
 import { toUtcIso, toUtcParam } from "../../../../session/time.js";
 import { enabledFor, NEEDS_READ_POST } from "../shared.js";
@@ -23,6 +30,8 @@ const MAX_LIMIT = 200;
 const EXCERPT_LENGTH = 200;
 /** The site returns at most this many posts and says nothing when it stops (`PostQuery.MaxResults`). */
 const SERVER_CAP = 500;
+
+const PRO_REQUIRED = "licence.pro_required";
 
 const STATUSES = Object.values(PostStatus) as [PostStatus, ...PostStatus[]];
 
@@ -43,6 +52,7 @@ const inputSchema = {
     .optional()
     .describe("Only posts tied to this page: its document key, from the cms document tools."),
   pageCulture: z.string().optional().describe("With pageKey: only the posts for this language of the page."),
+  tagKey: z.guid().optional().describe("Only posts with this tag, from list-tags. Needs UmbSocial Pro."),
   newestFirst: z.boolean().optional().describe("Latest first instead of earliest first."),
   limit: z
     .number()
@@ -92,7 +102,7 @@ const listPostsTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = {
     "There is no skip or take: to see more, move the window or narrow it with a status, channel, campaign or page.",
     `It returns at most ${MAX_LIMIT} (default ${DEFAULT_LIMIT}); \`truncated\` is true when more posts matched, and \`total\` says how many.`,
     "A dated list leaves out posts waiting for their page to go live: ask with status WaitingForPage to list those (no window is used).",
-    "Filtering by page needs Umbraco's Browse permission on it.",
+    "Filtering by page needs Umbraco's Browse permission on it, and filtering by tag needs UmbSocial Pro.",
     NEEDS_READ_POST,
   ].join(" "),
   slices: ["list"],
@@ -100,7 +110,13 @@ const listPostsTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = {
   inputSchema,
   outputSchema,
   enabled: enabledFor(READ_POST),
-  handler: async ({ fromUtc, toUtc, status, channelKey, campaignKey, pageKey, pageCulture, newestFirst, limit }) => {
+  handler: async ({ fromUtc, toUtc, status, channelKey, campaignKey, pageKey, pageCulture, tagKey, newestFirst, limit }) => {
+    // An unlicensed site ignores the tag filter and lists every post, so the
+    // filter is refused here instead (`TagPostFilter`).
+    if (tagKey && currentEdition()?.isLicensed === false) {
+      throw new UmbracoApiError({ codes: [PRO_REQUIRED], status: 403, hint: REFUSAL_HINTS[PRO_REQUIRED] });
+    }
+
     // The site leaves waiting posts out of any dated list, so they are asked for without one.
     const now = Date.now();
     const window =
@@ -119,6 +135,7 @@ const listPostsTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = {
       channel: channelKey,
       campaign: campaignKey,
       ...(pageKey ? { "filters[content]": pageCulture ? `${pageKey}:${pageCulture}` : pageKey } : {}),
+      ...(tagKey ? { "filters[tag]": tagKey } : {}),
     } as ListPostsParams;
 
     const response = await callSocial<PostResponse[]>((api, raw) => api.listPosts({ ...filters, newestFirst }, raw));
