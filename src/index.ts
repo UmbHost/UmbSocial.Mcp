@@ -29,6 +29,7 @@ import {
 } from "@umbraco-cms/mcp-server-sdk";
 
 import { collections } from "./collections.js";
+import { allCollections } from "./tool-collections.js";
 import { createServer } from "./server.js";
 import { getSocialApi } from "./umbraco-api/api/client.js";
 import { mcpClientManager } from "./umbraco-api/mcp-client.js";
@@ -182,7 +183,7 @@ if (socialConfig) {
 
 let registeredToolCount = 0;
 
-for (const { tool, collectionName } of toolsFor(collections, currentUser, filterConfig)) {
+for (const { tool, collectionName } of toolsFor(allCollections, currentUser, filterConfig)) {
   registerToolCollection(tool.name, collectionName);
 
   server.registerTool(

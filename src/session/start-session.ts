@@ -64,7 +64,7 @@ export function toolsFor(
     const collectionName = collection.metadata.name;
     for (const tool of collection.tools(user)) {
       if (user && tool.enabled && !tool.enabled(user)) continue;
-      if (inSliceStillOff(tool, config)) continue;
+      if (inDefaultOffSlice(tool, (slice) => config.disabledSlices.includes(slice))) continue;
       if (!shouldIncludeTool(tool, { collectionName, config })) continue;
       chosen.push({ tool, collectionName });
     }
@@ -74,7 +74,7 @@ export function toolsFor(
 
 const defaultOff: readonly string[] = DEFAULT_OFF_SLICES;
 
-/** Whether the tool is in a default-off slice that `UMBSOCIAL_ENABLE_SLICES` didn't turn on. */
-function inSliceStillOff(tool: ToolDefinition<any, any>, config: CollectionConfiguration): boolean {
-  return (tool.slices ?? []).some((slice) => defaultOff.includes(slice) && config.disabledSlices.includes(slice));
+/** Whether the tool is in a default-off slice that is still off (`UMBSOCIAL_ENABLE_SLICES` didn't turn it on). */
+export function inDefaultOffSlice(tool: ToolDefinition<any, any>, isOff: (slice: string) => boolean): boolean {
+  return (tool.slices ?? []).some((slice) => defaultOff.includes(slice) && isOff(slice));
 }

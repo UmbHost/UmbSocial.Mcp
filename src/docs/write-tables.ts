@@ -5,7 +5,7 @@
  */
 
 import { writeFileSync } from "node:fs";
-import { collections } from "../collections.js";
+import { allCollections as collections } from "../tool-collections.js";
 import { REFUSAL_HINTS_PATH, renderRefusalHints, renderToolsTable, TOOLS_TABLE_PATH } from "./tools-table.js";
 
 writeFileSync(TOOLS_TABLE_PATH, renderToolsTable(collections));

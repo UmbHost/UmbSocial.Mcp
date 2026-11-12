@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { collections } from "../../collections.js";
+import { allCollections as collections } from "../../tool-collections.js";
 import { REFUSAL_HINTS } from "../../session/refusals.js";
 import { REFUSAL_HINTS_PATH, renderRefusalHints, renderToolsTable, TOOLS_TABLE_PATH } from "../tools-table.js";
 

@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { http, HttpResponse } from "msw";
 import { DEFAULT_COLLECTION_CONFIG } from "@umbraco-cms/mcp-server-sdk";
 import { server } from "../../mocks/server.js";
-import { collections } from "../../collections.js";
+import { allCollections as collections } from "../../tool-collections.js";
 import getSocialEdition from "../../umbraco-api/tools/social/get/get-social-edition.js";
 import listTemplates from "../../umbraco-api/tools/social-pro/get/list-templates.js";
 import { applyDefaultOffSlices } from "../../config/server-config.js";

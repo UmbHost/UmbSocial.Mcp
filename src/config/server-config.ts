@@ -68,7 +68,8 @@ function readBaseUrl(env: NodeJS.ProcessEnv): URL {
   return url;
 }
 
-function readEnabledSlices(env: NodeJS.ProcessEnv): Set<DefaultOffSlice> {
+/** The default-off slices `UMBSOCIAL_ENABLE_SLICES` turns on; an unknown name is refused. */
+export function readEnabledSlices(env: NodeJS.ProcessEnv): Set<DefaultOffSlice> {
   const names = (env.UMBSOCIAL_ENABLE_SLICES ?? "")
     .split(",")
     .map((name) => name.trim().toLowerCase())

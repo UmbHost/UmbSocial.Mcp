@@ -1,6 +1,6 @@
 import { describe, expect, it } from "@jest/globals";
 import { DEFAULT_COLLECTION_CONFIG } from "@umbraco-cms/mcp-server-sdk";
-import { collections } from "../../../../collections.js";
+import { allCollections as collections } from "../../../../tool-collections.js";
 import { toolsFor } from "../../../../session/start-session.js";
 import { userWith } from "./helpers/session.js";
 

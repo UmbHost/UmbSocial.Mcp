@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { http, HttpResponse } from "msw";
 import { clearServerRef, setServerRef, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
-import { collections } from "../../../../collections.js";
+import { allCollections as collections } from "../../../../tool-collections.js";
 import { server } from "../../../../mocks/server.js";
 import { callTool, errorBody } from "../../../../session/__tests__/helpers.js";
 import { REFUSAL_HINTS } from "../../../../session/refusals.js";

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "@jest/globals";
 import { z } from "zod";
 import { createPermissiveCodegenUser, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
-import { collections } from "../../collections.js";
+import { allCollections as collections } from "../../tool-collections.js";
 import { CMS_TOOLS } from "../../config/mcp-servers.js";
 import { idGuardProblems } from "./id-guard.js";
 
