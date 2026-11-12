@@ -47,6 +47,7 @@ The generated client (`src/umbraco-api/api/generated/`) and the Swagger snapshot
 ```bash
 npm run compile   # type-check
 npm test          # unit tests (MSW)
+UMBSOCIAL_LIVE=1 npm run test:live   # live checks against running sites (tests/live/README.md); never in CI
 npm run build     # tsup, then the SDK's tool-types generator
 npm run generate  # the client from the committed Swagger snapshot (no site needed)
 ./scripts/generate.ps1 -SiteUrl https://localhost:44391   # refresh the snapshot from a running site, then generate

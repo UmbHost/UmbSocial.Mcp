@@ -22,7 +22,8 @@
     "watch": "tsup --config tsup.config.ts --watch",
     "generate": "orval --config orval.config.ts",
     "inspect": "npx @modelcontextprotocol/inspector node dist/index.js",
-    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPatterns=__tests__ --runInBand"
+    "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPatterns=__tests__ --runInBand",
+    "test:live": "npm run build && node --use-system-ca --experimental-vm-modules node_modules/jest/bin/jest.js --config jest.live.config.ts --runInBand"
   },
   "engines": {
     "node": ">=22.3.0"
