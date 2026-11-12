@@ -5,6 +5,7 @@ import { server } from "../../mocks/server.js";
 import { collections } from "../../collections.js";
 import getSocialEdition from "../../umbraco-api/tools/social/get/get-social-edition.js";
 import listTemplates from "../../umbraco-api/tools/social-pro/get/list-templates.js";
+import { applyDefaultOffSlices } from "../../config/server-config.js";
 import { clearSession, NO_SECTION_MESSAGE, startSession, toolsFor } from "../start-session.js";
 import { currentEdition, gatePro } from "../edition.js";
 import { callTool, EDITION_PATH, LICENSED, UNLICENSED, USER_PATH } from "./helpers.js";
@@ -95,5 +96,21 @@ describe("the session at start-up", () => {
     const names = toolsFor([collection], withSection, DEFAULT_COLLECTION_CONFIG).map((t) => t.tool.name);
 
     expect(names).toEqual(["shown"]);
+  });
+
+  it("naming_a_default_off_tool_does_not_turn_its_slice_on", () => {
+    // The SDK's UMBRACO_INCLUDE_TOOLS is checked before the slices, so it would
+    // otherwise register approve-post without UMBSOCIAL_ENABLE_SLICES.
+    const allVerbs = {
+      allowedSections: ["UmbSocial.Section"],
+      fallbackPermissions: ["View", "Write", "Approve", "Resolve"].map((v) => `UmbSocial.${v}`),
+    };
+    const named = { ...DEFAULT_COLLECTION_CONFIG, enabledTools: ["approve-post", "retry-post-target", "get-post"] };
+    const names = (enabled: ReadonlySet<"approve" | "resolve">) =>
+      toolsFor(collections, allVerbs, applyDefaultOffSlices(named, enabled)).map((t) => t.tool.name).sort();
+
+    expect(names(new Set())).toEqual(["get-post"]);
+    expect(names(new Set(["approve"]))).toEqual(["approve-post", "get-post"]);
+    expect(names(new Set(["approve", "resolve"]))).toEqual(["approve-post", "get-post", "retry-post-target"]);
   });
 });

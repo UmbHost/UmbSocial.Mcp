@@ -11,6 +11,7 @@ import {
 } from "@umbraco-cms/mcp-server-sdk";
 import { clearCurrentUser, loadCurrentUser, toSocialUser, type CurrentUser, type SocialUser } from "./social-user.js";
 import { clearEdition, loadEdition, type Edition } from "./edition.js";
+import { DEFAULT_OFF_SLICES } from "../config/slice-registry.js";
 
 /** What `get-social-edition` answers for a user without the Social section. */
 export const NO_SECTION_MESSAGE =
@@ -48,7 +49,10 @@ export function clearSession(): void {
  * `enabled(user)`, then the SDK's filters (modes, slices, tool lists).
  *
  * Hand-rolled because the SDK lacks it: `shouldIncludeTool` never calls
- * `enabled(user)`. This applies it as the CMS MCP's own registrar does.
+ * `enabled(user)`. This applies it as the CMS MCP's own registrar does. And
+ * `shouldIncludeTool` lets a tool named in `UMBRACO_INCLUDE_TOOLS` through
+ * before it looks at the slices, so a tool in a default-off slice that is
+ * still off (see `applyDefaultOffSlices`) is left out here first.
  */
 export function toolsFor(
   collections: readonly ToolCollectionExport[],
@@ -60,9 +64,17 @@ export function toolsFor(
     const collectionName = collection.metadata.name;
     for (const tool of collection.tools(user)) {
       if (user && tool.enabled && !tool.enabled(user)) continue;
+      if (inSliceStillOff(tool, config)) continue;
       if (!shouldIncludeTool(tool, { collectionName, config })) continue;
       chosen.push({ tool, collectionName });
     }
   }
   return chosen;
+}
+
+const defaultOff: readonly string[] = DEFAULT_OFF_SLICES;
+
+/** Whether the tool is in a default-off slice that `UMBSOCIAL_ENABLE_SLICES` didn't turn on. */
+function inSliceStillOff(tool: ToolDefinition<any, any>, config: CollectionConfiguration): boolean {
+  return (tool.slices ?? []).some((slice) => defaultOff.includes(slice) && config.disabledSlices.includes(slice));
 }
