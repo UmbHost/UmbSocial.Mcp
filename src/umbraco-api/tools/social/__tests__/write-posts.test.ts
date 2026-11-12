@@ -290,7 +290,9 @@ describe("writing posts", () => {
     expect(body.codes).toEqual(["ai.needs_review"]);
     expect(body.hint).toBe(REFUSAL_HINTS["ai.needs_review"]);
     expect(body.hint).toMatch(/person must review/i);
-    expect(body.hint).not.toMatch(/retry|try again|\bwhen\b|Queue|Now|At\b/i);
+    expect(body.hint).not.toMatch(/retry|try again|\bwhen\b/i);
+    // The schedule's own values, as the API spells them.
+    expect(body.hint).not.toMatch(/\bQueue\b|\bNow\b|\bAt\b/);
   });
 
   it("channel_texts_for_an_unchosen_channel_are_refused_before_calling", async () => {
@@ -509,5 +511,122 @@ describe("writing posts", () => {
     const result = await callTool(createPost, { text: "Line one\r\nLine two\n\tindented", channelKeys: [CHANNEL_A] });
     expect(result.isError).toBeFalsy();
     expect(body).toMatchObject({ text: "Line one\r\nLine two\n\tindented" });
+  });
+
+  it("update_post_keeps_the_delay_for_a_reader_without_browse", async () => {
+    // A reader without Browse on the page sees no key, but the delay is the post's.
+    const post = aFullDraft({
+      page: { contentKey: null, culture: null, name: null, plannedUtc: null, wait: null, delayMinutes: 60, timed: false },
+    });
+    const puts = servePost(post);
+
+    await callTool(updatePost, { key: post.key, version: post.version, text: "New words" });
+
+    expect(puts[0]).toMatchObject({ pageDelayMinutes: 60 });
+    expect(puts[0]).not.toHaveProperty("sourceContentKey");
+    expect(puts[0]).not.toHaveProperty("sourceCulture");
+  });
+
+  it("a_new_page_resets_the_language_and_delay", async () => {
+    const post = aFullDraft();
+    const puts = servePost(post);
+    const otherPage = "13131313-1313-4131-8131-131313131313";
+
+    await callTool(updatePost, { key: post.key, version: post.version, pageKey: otherPage });
+    await callTool(updatePost, { key: post.key, version: post.version, pageKey: otherPage, pageCulture: "da-DK", pageDelayMinutes: 0 });
+    // The same page keeps both.
+    await callTool(updatePost, { key: post.key, version: post.version, pageKey: PAGE });
+
+    expect(puts[0]).toMatchObject({ sourceContentKey: otherPage, sourceCulture: null, pageDelayMinutes: null });
+    expect(puts[1]).toMatchObject({ sourceContentKey: otherPage, sourceCulture: "da-DK", pageDelayMinutes: 0 });
+    expect(puts[2]).toMatchObject({ sourceContentKey: PAGE, sourceCulture: "en-GB", pageDelayMinutes: 60 });
+  });
+
+  it("a_null_page_unties_the_post", async () => {
+    const post = aFullDraft();
+    const puts = servePost(post);
+
+    await callTool(updatePost, { key: post.key, version: post.version, pageKey: null });
+
+    expect(puts[0]).toMatchObject({ sourceContentKey: null, sourceCulture: null, pageDelayMinutes: null });
+  });
+
+  it("update_post_refuses_control_characters", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    const post = aFullDraft();
+    // No handlers: neither the read nor a PUT may be sent.
+    for (const args of [
+      { text: "Hello\u0007" },
+      { channelTexts: { [CHANNEL_A]: "Hi\u0000" } },
+      { options: { [CHANNEL_A]: { pinTitle: "\u001b[1mPin" } } },
+      { linkTitle: "Title\u000b" },
+    ]) {
+      const result = await callTool(updatePost, { key: post.key, version: post.version, ...args });
+      expect(result.isError).toBe(true);
+      expect(JSON.stringify(result.content)).toMatch(/control characters/);
+    }
+  });
+
+  it("delete_post_deletes_when_the_person_accepts", async () => {
+    const post = aFullDraft();
+    let deleted = 0;
+    server.use(
+      http.get(`${API}/posts/:key`, () => HttpResponse.json(post)),
+      http.delete(`${API}/posts/:key`, () => {
+        deleted++;
+        return new HttpResponse(null, { status: 200 });
+      }),
+    );
+    const elicitInput = jest.fn(async () => ({ action: "accept", content: { confirm: true } }));
+    setServerRef({ getClientCapabilities: () => ({ elicitation: { form: {} } }), elicitInput } as never);
+
+    const result = await callTool(deletePost, { key: post.key });
+
+    expect(elicitInput).toHaveBeenCalledTimes(1);
+    expect(deleted).toBe(1);
+    expect(result.structuredContent).toEqual({ key: post.key, deleted: true });
+  });
+
+  it("delete_post_reads_again_after_the_confirmation", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    const draft = aFullDraft();
+    let deleted = 0;
+    let reads = 0;
+    let current: PostResponse = draft;
+    server.use(
+      http.get(`${API}/posts/:key`, () => {
+        reads++;
+        return HttpResponse.json(current);
+      }),
+      http.delete(`${API}/posts/:key`, () => {
+        deleted++;
+        return new HttpResponse(null, { status: 200 });
+      }),
+    );
+
+    // A person schedules it while the confirmation is open.
+    const scheduled = { ...draft, status: "Scheduled", version: "90909090-9090-4909-8909-909090909090" };
+    const elicitInput = jest.fn(async () => {
+      current = scheduled;
+      return { action: "accept", content: { confirm: true } };
+    });
+    setServerRef({ getClientCapabilities: () => ({ elicitation: { form: {} } }), elicitInput } as never);
+    const refused = await callTool(deletePost, { key: draft.key });
+
+    expect(reads).toBe(2);
+    expect(deleted).toBe(0);
+    expect(errorBody(refused)).toMatchObject({ codes: ["post.not_draft"], status: 400 });
+
+    // Still a draft, but edited while the confirmation was open.
+    const edited = { ...draft, version: "91919191-9191-4919-8919-919191919191" };
+    elicitInput.mockImplementation(async () => {
+      current = edited;
+      return { action: "accept", content: { confirm: true } };
+    });
+    current = draft;
+    const changed = await callTool(deletePost, { key: draft.key });
+
+    expect(deleted).toBe(0);
+    expect(errorBody(changed)).toMatchObject({ codes: ["post.changed"], status: 400 });
   });
 });

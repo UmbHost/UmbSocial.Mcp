@@ -6,7 +6,7 @@ import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { PostResponse } from "../../../api/generated/umbSocialApi.js";
 import { callSocial } from "../../../../session/refusals.js";
-import { assertEditable } from "../post-request.js";
+import { assertEditable, assertVersion } from "../post-request.js";
 import { confirmIfSupported, enabledFor } from "../shared.js";
 
 const inputSchema = {
@@ -38,6 +38,12 @@ const deletePostTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = 
     if (!(await confirmIfSupported(extra, `Delete the Social post "${excerpt}" for good?`))) {
       return createToolResult({ key, deleted: false, message: "The person chose not to delete the post." });
     }
+
+    // Read again: a person may have scheduled or changed it while the question
+    // was open, and DELETE takes no version of its own.
+    const again = await callSocial<PostResponse>((api, raw) => api.getPost(key, raw));
+    assertEditable(again.data);
+    assertVersion(again.data, read.data.version);
 
     await callSocial<void>((api, raw) => api.deletePost(key, raw));
     return createToolResult({ key, deleted: true });

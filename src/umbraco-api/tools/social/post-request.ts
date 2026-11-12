@@ -67,11 +67,14 @@ export function toPostRequest(post: PostResponse): PostRequest {
     version: post.version,
   };
 
-  // Without a key the reader can't browse the page; sending none keeps it for such a reader.
-  if (post.page?.contentKey) {
-    request.sourceContentKey = post.page.contentKey;
-    request.sourceCulture = post.page.culture ?? null;
+  if (post.page) {
+    // The delay is the post's own, whoever reads it.
     request.pageDelayMinutes = post.page.delayMinutes ?? null;
+    // Without a key the reader can't browse the page; sending none keeps it for such a reader.
+    if (post.page.contentKey) {
+      request.sourceContentKey = post.page.contentKey;
+      request.sourceCulture = post.page.culture ?? null;
+    }
   }
   return request;
 }
