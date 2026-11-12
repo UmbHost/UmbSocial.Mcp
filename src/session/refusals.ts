@@ -74,6 +74,14 @@ export const REFUSAL_HINTS: Readonly<Record<string, string>> = {
   "schedule.range_too_long":
     "Ask for at most 42 days of slots at a time, with the end after the start. Move the range on to see later slots.",
   "metrics.too_many_keys": "Ask for the figures of at most 200 posts at a time.",
+  "post.not_draft":
+    "Only a draft, or a post awaiting approval, can be changed or deleted through this server, so a post on the calendar or already sent stays as a person left it. Ask a person to change it in the Umbraco backoffice.",
+  "input.channel_not_chosen": "Every channel in channelTexts or options must also be one of the post's channels.",
+  "schedule.delay_invalid": "pageDelayMinutes is 0, 60 or 1440; leave it out for the queue's next free slot.",
+  "link.https_required": "Links must start with https://.",
+  "link.unreachable": "The site couldn't read that page. Check the address, or write the link card yourself.",
+  "link.not_allowed": "The site won't fetch that address.",
+  "campaign.unknown": "That campaign doesn't exist any more. Use list-campaigns.",
 };
 
 function hintFor(code: string): string | undefined {

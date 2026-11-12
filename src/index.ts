@@ -4,7 +4,7 @@
  */
 
 import "./load-env.js";
-import { McpServer, type ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
+import type { ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import packageJson from "../package.json" with { type: "json" };
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import {
@@ -29,6 +29,7 @@ import {
 } from "@umbraco-cms/mcp-server-sdk";
 
 import { collections } from "./collections.js";
+import { createServer } from "./server.js";
 import { getSocialApi } from "./umbraco-api/api/client.js";
 import { mcpClientManager } from "./umbraco-api/mcp-client.js";
 import { mcpServers, proxiedToolConfig } from "./config/mcp-servers.js";
@@ -165,10 +166,7 @@ const versionCheckMessage = getVersionCheckMessage();
 // MCP server and tools
 // ============================================================================
 
-const server = new McpServer(
-  { name: SERVER_NAME, version: packageJson.version },
-  versionCheckMessage ? { instructions: versionCheckMessage } : undefined,
-);
+const server = createServer(SERVER_NAME, packageJson.version, versionCheckMessage ?? undefined);
 
 // Who's calling and the edition, before any tool is chosen: tools are hidden
 // from a user without the verb they need, and Pro's when the site isn't licensed.

@@ -16,6 +16,12 @@ import listFreeSlots from "./get/list-free-slots.js";
 import getNextFreeSlot from "./get/get-next-free-slot.js";
 import listCampaigns from "./get/list-campaigns.js";
 import getPageShare from "./get/get-page-share.js";
+import previewLink from "./get/preview-link.js";
+import checkPost from "./post/check-post.js";
+import createPost from "./post/create-post.js";
+import createCampaign from "./post/create-campaign.js";
+import updatePost from "./put/update-post.js";
+import deletePost from "./delete/delete-post.js";
 
 /** Every Social tool but `get-social-edition`, which is always registered. */
 const tools: ToolDefinition<any, any>[] = [
@@ -30,6 +36,12 @@ const tools: ToolDefinition<any, any>[] = [
   getNextFreeSlot,
   listCampaigns,
   getPageShare,
+  checkPost,
+  createPost,
+  updatePost,
+  deletePost,
+  createCampaign,
+  previewLink,
 ];
 
 export const socialCollection: ToolCollectionExport<CurrentUser | undefined> = {
