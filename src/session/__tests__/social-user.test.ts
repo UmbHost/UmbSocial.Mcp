@@ -31,4 +31,10 @@ describe("the Social user", () => {
     expect(can(noSection, "View")).toBe(false);
     expect(can(toSocialUser({ allowedSections: [] }), "View")).toBe(false);
   });
+
+  it("no_verbs_means_the_section_alone", () => {
+    // As SocialPolicies.Section: any user with the section, whatever their verbs.
+    expect(can(toSocialUser({ allowedSections: ["UmbSocial.Section"], fallbackPermissions: [] }))).toBe(true);
+    expect(can(toSocialUser({ allowedSections: ["Umb.Section.Content"], fallbackPermissions: ["UmbSocial.View"] }))).toBe(false);
+  });
 });

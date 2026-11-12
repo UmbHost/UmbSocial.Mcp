@@ -8,7 +8,8 @@
  * Hand-rolled because the SDK lacks it: its `executeGetApiCall` builds the
  * error from the status and body only (`toProblemDetails`), so the
  * `X-UmbSocial-Codes` header is lost, and it only warns when a call forgot
- * `CAPTURE_RAW_HTTP_RESPONSE`. A success is still handed back as the raw
+ * `CAPTURE_RAW_HTTP_RESPONSE`. A failure without codes carries only its status
+ * and reason phrase. A success is still handed back as the raw
  * response, for `executeGetApiCall` & co. or `createToolResult` to format.
  */
 
@@ -129,7 +130,11 @@ export function checkedResponse<T>(result: unknown): HttpResponse<T> {
 
   if (response.status === 401) clearUmbracoFetchToken();
   const refusal = toRefusal(response);
-  throw new UmbracoApiError(refusal ? { ...refusal } : toProblemDetails(response));
+  // Without codes, only the status and its reason phrase: never the body, which
+  // can hold a stack trace or an HTML error page, in the tool result or the log.
+  throw new UmbracoApiError(
+    refusal ? { ...refusal } : toProblemDetails({ status: response.status, statusText: response.statusText, data: undefined }),
+  );
 }
 
 /**

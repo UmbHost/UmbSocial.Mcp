@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
+import { inspect } from "node:util";
 import { http, HttpResponse } from "msw";
 import { initializeUmbracoFetch, UmbracoApiError } from "@umbraco-cms/mcp-server-sdk";
 import { server } from "../../mocks/server.js";
@@ -114,5 +115,41 @@ describe("refusals", () => {
 
     // A call that drops the raw response is refused rather than half-working.
     await expect(callSocial(async () => ({ isLicensed: true }))).rejects.toThrow("CAPTURE_RAW_HTTP_RESPONSE");
+  });
+
+  it("hints_for_several_codes_are_joined_once_each", () => {
+    const refusal = toRefusal({
+      status: 400,
+      statusText: "Bad Request",
+      data: { codes: ["post.not_yours", "approval.cancelled:One", "approval.cancelled:Two", "post.not_yours"] },
+    });
+
+    expect(refusal?.hint).toBe(`${REFUSAL_HINTS["post.not_yours"]} ${REFUSAL_HINTS["approval.cancelled"]}`);
+  });
+
+  it("a_failure_without_codes_carries_no_body_text", async () => {
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+    const cases: Array<{ response: () => Response; expected: unknown }> = [
+      {
+        response: () =>
+          HttpResponse.json({ title: "Boom", detail: "SECRET-BODY stack trace" }, { status: 500 }),
+        expected: { status: 500, title: "Internal Server Error" },
+      },
+      {
+        response: () =>
+          new HttpResponse("<html><body>SECRET-BODY bad gateway</body></html>", {
+            status: 502,
+            headers: { "Content-Type": "text/html" },
+          }),
+        expected: { status: 502, title: "Bad Gateway" },
+      },
+    ];
+
+    for (const { response, expected } of cases) {
+      server.use(http.get(EDITION_PATH, response, { once: true }));
+      expect(errorBody(await callTool(getSocialEdition))).toEqual(expected);
+    }
+    const logged = log.mock.calls.flat().map((arg) => inspect(arg, { depth: 10 })).join(" ");
+    expect(logged).not.toContain("SECRET-BODY");
   });
 });

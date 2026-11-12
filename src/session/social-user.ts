@@ -44,10 +44,13 @@ export function toSocialUser(current: CurrentUser): SocialUser {
   };
 }
 
-/** Whether the user may try something that needs any one of these verbs. */
+/**
+ * Whether the user may try something that needs any one of these verbs. With
+ * no verbs named, the section alone (`SocialPolicies.Section`).
+ */
 export function can(user: SocialUser, ...anyOf: SocialVerb[]): boolean {
   if (!user.hasSection) return false;
-  if (user.verbs === null) return true;
+  if (anyOf.length === 0 || user.verbs === null) return true;
   const verbs = user.verbs;
   return anyOf.some((verb) => verbs.has(verb));
 }
