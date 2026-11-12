@@ -71,6 +71,9 @@ export const REFUSAL_HINTS: Readonly<Record<string, string>> = {
   "field.required:culture": "The page varies by language, so the post must name one of its languages.",
   "schedule.needs_page": "Going out when the page goes live needs a post tied to a page.",
   "media.unknown": "No media item with that key. Find the image with the cms tools.",
+  "schedule.range_too_long":
+    "Ask for at most 42 days of slots at a time, with the end after the start. Move the range on to see later slots.",
+  "metrics.too_many_keys": "Ask for the figures of at most 200 posts at a time.",
 };
 
 function hintFor(code: string): string | undefined {
