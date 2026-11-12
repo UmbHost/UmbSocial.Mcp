@@ -179,5 +179,26 @@ export function checkedResponse<T>(result: unknown): HttpResponse<T> {
 export async function callSocial<T>(
   op: (api: SocialApi, raw: typeof CAPTURE_RAW_HTTP_RESPONSE) => Promise<unknown>,
 ): Promise<HttpResponse<T>> {
-  return checkedResponse<T>(await op(getApiClient<SocialApi>(), CAPTURE_RAW_HTTP_RESPONSE));
+  let result: unknown;
+  try {
+    result = await op(getApiClient<SocialApi>(), CAPTURE_RAW_HTTP_RESPONSE);
+  } catch (error) {
+    throw withoutBody(error);
+  }
+  return checkedResponse<T>(result);
+}
+
+/**
+ * A response labelled JSON that isn't (the call's or the token request's) is
+ * reported without its text. Hand-rolled because the SDK lacks it: it parses
+ * with `response.json()`, whose SyntaxError quotes the start of the body, and
+ * its error handling puts that message in the tool result and the log.
+ * Matched by name, as the error can come from another realm.
+ */
+export function withoutBody(error: unknown): unknown {
+  if ((error as { name?: unknown } | null)?.name !== "SyntaxError") return error;
+  return new UmbracoApiError({
+    ...toProblemDetails({ status: 502, statusText: "Bad Gateway", data: undefined }),
+    detail: "The site's response was labelled JSON but is not valid JSON.",
+  });
 }

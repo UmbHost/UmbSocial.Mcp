@@ -5,7 +5,8 @@ import { initializeUmbracoFetch, UmbracoApiError } from "@umbraco-cms/mcp-server
 import { server } from "../../mocks/server.js";
 import getSocialEdition from "../../umbraco-api/tools/social/get/get-social-edition.js";
 import { callSocial, REFUSAL_HINTS, toRefusal } from "../refusals.js";
-import { callTool, EDITION_PATH, errorBody, TOKEN_PATH } from "./helpers.js";
+import { loadCurrentUser } from "../social-user.js";
+import { callTool, EDITION_PATH, errorBody, TOKEN_PATH, USER_PATH } from "./helpers.js";
 
 const refusalBody = (status: number, codes: string[]) => ({ type: "Error", title: "Refused", status, codes });
 
@@ -151,5 +152,38 @@ describe("refusals", () => {
     }
     const logged = log.mock.calls.flat().map((arg) => inspect(arg, { depth: 10 })).join(" ");
     expect(logged).not.toContain("SECRET-BODY");
+  });
+
+  it("a_response_labelled_json_that_is_not_json_leaks_no_body", async () => {
+    const log = jest.spyOn(console, "error").mockImplementation(() => {});
+    // Node's SyntaxError quotes the start of the text it couldn't parse.
+    const notJson = (status: number) => () =>
+      new HttpResponse("SECRETBODY<html>oops", { status, headers: { "Content-Type": "application/json" } });
+
+    for (const status of [200, 500]) {
+      server.use(http.get(EDITION_PATH, notJson(status), { once: true }));
+      const body = errorBody(await callTool(getSocialEdition)) as Record<string, unknown>;
+      expect(JSON.stringify(body)).not.toMatch(/SECRET|html|oops/);
+      expect(body).toMatchObject({ status: 502, title: "Bad Gateway" });
+      expect(String(body.detail)).toMatch(/not valid JSON/);
+    }
+
+    // Reading the API user at start-up, which doesn't go through the generated client.
+    server.use(http.get(USER_PATH, notJson(200), { once: true }));
+    const startup = await loadCurrentUser().then(
+      () => "resolved",
+      (error: unknown) => inspect(error, { depth: 10 }),
+    );
+    expect(startup).toMatch(/not valid JSON/);
+    expect(startup).not.toMatch(/SECRET|oops/);
+
+    // The token endpoint too.
+    initializeUmbracoFetch({ baseUrl: "http://localhost:9999", clientId: "test-client", clientSecret: "test-secret" });
+    server.use(http.post(TOKEN_PATH, notJson(200), { once: true }));
+    const token = errorBody(await callTool(getSocialEdition));
+    expect(JSON.stringify(token)).not.toMatch(/SECRET|html|oops/);
+
+    const logged = log.mock.calls.flat().map((arg) => inspect(arg, { depth: 10 })).join(" ");
+    expect(logged).not.toMatch(/SECRET|oops/);
   });
 });

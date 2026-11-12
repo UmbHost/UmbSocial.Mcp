@@ -8,7 +8,7 @@
  */
 
 import { CAPTURE_RAW_HTTP_RESPONSE, UmbracoManagementClient } from "@umbraco-cms/mcp-server-sdk";
-import { checkedResponse } from "./refusals.js";
+import { checkedResponse, withoutBody } from "./refusals.js";
 
 export const SOCIAL_SECTION = "UmbSocial.Section";
 
@@ -69,7 +69,9 @@ export async function loadCurrentUser(): Promise<CurrentUser> {
   const result = await UmbracoManagementClient<unknown>(
     { url: CURRENT_USER_PATH, method: "GET" },
     CAPTURE_RAW_HTTP_RESPONSE,
-  );
+  ).catch((error: unknown) => {
+    throw withoutBody(error);
+  });
   const user = checkedResponse<CurrentUser>(result).data;
   socialUser = toSocialUser(user);
   return user;

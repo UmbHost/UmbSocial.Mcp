@@ -35,6 +35,7 @@ import { getSocialApi } from "./umbraco-api/api/client.js";
 import { mcpClientManager } from "./umbraco-api/mcp-client.js";
 import { allowlisted, mcpServers, proxiedToolConfig } from "./config/mcp-servers.js";
 import { startSession, toolsFor } from "./session/start-session.js";
+import { withoutBody } from "./session/refusals.js";
 import type { CurrentUser } from "./session/social-user.js";
 import {
   allModes,
@@ -153,7 +154,9 @@ if (socialConfig) {
         const response = (await UmbracoManagementClient<{ version: string }>(
           { url: SERVER_INFORMATION_PATH, method: "GET" },
           CAPTURE_RAW_HTTP_RESPONSE,
-        )) as unknown as HttpResponse<{ version: string }>;
+        ).catch((error: unknown) => {
+          throw withoutBody(error);
+        })) as unknown as HttpResponse<{ version: string }>;
         return { version: response.data.version };
       },
     },
