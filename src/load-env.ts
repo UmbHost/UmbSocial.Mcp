@@ -1,18 +1,11 @@
 /**
- * Loads .env quietly.
+ * Loads the `.env` file named by `UMBSOCIAL_ENV_FILE`, and no other (see
+ * config/env-file.ts).
  *
- * dotenv 17 prints a banner to stdout when it loads (e.g.
- * "◇ injected env (0) from .env"). This server's stdout carries MCP protocol
- * traffic on stdio, and the CLI's introspection commands (--describe-tool,
- * --debug-config) emit machine-readable JSON, so anything extra on stdout
- * corrupts them.
- *
- * `import "dotenv/config"` cannot be passed options — it only reads
- * DOTENV_CONFIG_QUIET from the environment, which can't be set before its own
- * import. Importing this module instead keeps the same load ordering (ESM
- * evaluates imported modules before the importing module's body) while
- * silencing the banner.
+ * Imported first in index.ts: ESM evaluates imported modules before the
+ * importing module's body, so the values are in place before anything reads
+ * them.
  */
-import { config } from "dotenv";
+import { loadEnvFile } from "./config/env-file.js";
 
-config({ quiet: true });
+loadEnvFile();

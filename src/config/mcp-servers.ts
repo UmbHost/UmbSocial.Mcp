@@ -21,6 +21,7 @@ import {
 } from "@umbraco-cms/mcp-server-sdk";
 import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
 import type { ZodTypeAny } from "zod";
+import { NO_ENV_FILE } from "./env-file.js";
 import type { SocialConfig } from "./server-config.js";
 
 /** The CMS Developer MCP: a dependency, pinned exactly in package.json and the shrinkwrap. */
@@ -89,7 +90,8 @@ export function mcpServers(config: SocialConfig): McpServerConfig[] {
       name: "cms",
       // The Node running this server, so nothing is looked up on PATH.
       command: process.execPath,
-      args: [cmsServerScript()],
+      // Its SDK reads .env from the working directory unless told otherwise.
+      args: [cmsServerScript(), `--env=${NO_ENV_FILE}`],
       env: {
         ...INHERITED_FILTERS_BLANKED,
         UMBRACO_BASE_URL: config.baseUrl.href.replace(/\/+$/, ""),

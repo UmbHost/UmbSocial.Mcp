@@ -42,12 +42,13 @@ For Claude Code, in `.mcp.json`:
 }
 ```
 
-Claude Code fills `${UMBSOCIAL_CLIENT_SECRET}` from your environment, so the secret stays out of the file. The server also reads a `.env` file in its working directory; [.env.example](.env.example) lists every variable.
+Claude Code fills `${UMBSOCIAL_CLIENT_SECRET}` from your environment, so the secret stays out of the file. The server never reads a `.env` file from its working directory, which is usually your project folder. To keep the settings in a file, set `UMBSOCIAL_ENV_FILE` to its full path; [.env.example](.env.example) lists every variable.
 
 | Variable | Meaning |
 |---|---|
 | `UMBRACO_BASE_URL` | The site's address. It must use https; plain http is allowed only for `localhost`, `127.0.0.1` and `[::1]`. |
 | `UMBRACO_CLIENT_ID`, `UMBRACO_CLIENT_SECRET` | The API user's client credentials. |
+| `UMBSOCIAL_ENV_FILE` | The full path of a file holding these variables, read at start. No other `.env` file is read. |
 | `UMBSOCIAL_ENABLE_SLICES` | Turns on tools that are off by default: `approve` (approve and return posts) and `resolve` (retry a channel, or mark it as published). |
 | `DISABLE_MCP_CHAINING` | `true` to leave out the chained CMS server (below) and its `cms--` tools. |
 | `UMBRACO_TOOL_MODES`, `UMBRACO_INCLUDE_SLICES`, `UMBRACO_EXCLUDE_TOOLS` and the rest | The SDK's tool filters. `UMBRACO_READONLY=true` keeps only the tools that read. |
@@ -76,7 +77,8 @@ This server registers only those eight tools, whatever the chained server lists,
 - **Drafts only.** The writing tools save drafts. `update-post` and `delete-post` change only drafts and posts awaiting approval: a post on the calendar, or one already sent, is left as a person left it.
 - **Off by default.** The `approve` and `resolve` tools act on review and on live networks, so they're registered only when `UMBSOCIAL_ENABLE_SLICES` names them (naming one in `UMBRACO_INCLUDE_TOOLS` isn't enough), and only for a user with the matching permission.
 - **The API user's permissions decide.** A tool is listed only when the API user's group has a permission that can use it, and Pro's tools only when the site is licensed. The site checks every call again.
-- **Secrets.** The client secret and access tokens never appear in tool results, errors or logs. Keep `.env` out of source control.
+- **Secrets.** The client secret and access tokens never appear in tool results, errors or logs. Keep the file `UMBSOCIAL_ENV_FILE` names out of source control and out of the project folder.
+- **An assistant with a shell gets round the client-side gates.** The off-by-default slices, the confirmations and the tool filters are kept by this server. An assistant that can run commands (Claude Code, for one) can read the client secret from its environment and call the site's API directly. Against such an assistant only the site's own checks hold: give the API user's group no permission you wouldn't give the assistant.
 - **Start on a staging site.** Try it against a copy of your site before you connect it to the live one.
 
 ## Development

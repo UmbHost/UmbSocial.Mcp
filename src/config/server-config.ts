@@ -38,7 +38,7 @@ export interface SocialConfig {
 function required(env: NodeJS.ProcessEnv, name: string): string {
   const value = env[name]?.trim();
   if (!value) {
-    throw new ConfigError(`${name} is required. Set it in the environment or in a .env file.`);
+    throw new ConfigError(`${name} is required. Set it in the environment, or in the file UMBSOCIAL_ENV_FILE names.`);
   }
   return value;
 }

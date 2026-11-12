@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { basename } from "node:path";
 import type { ProxiedTool } from "@umbraco-cms/mcp-server-sdk";
 import type { SocialConfig } from "../server-config.js";
+import { NO_ENV_FILE } from "../env-file.js";
 import { allowlisted, CMS_ID_TOOLS, CMS_MCP_PACKAGE, CMS_MCP_VERSION, cmsServerScript, mcpServers, proxiedToolConfig } from "../mcp-servers.js";
 
 const readJson = (path: string) => JSON.parse(readFileSync(path, "utf8")) as Record<string, any>;
@@ -46,6 +47,8 @@ describe("the chained CMS server", () => {
 
     expect(cms.name).toBe("cms");
     expect(cms.args?.[0]).toBe(cmsServerScript());
+    // Its SDK reads .env from the working directory unless told otherwise.
+    expect(cms.args?.slice(1)).toEqual([`--env=${NO_ENV_FILE}`]);
     expect(cms.proxyTools).toBe(true);
     expect(cms.env?.UMBRACO_READONLY).toBe("true");
 

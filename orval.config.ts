@@ -1,6 +1,9 @@
-// Loads .env, so the target-major stamp (below) can ask the site which Umbraco
-// it is. Only `scripts/generate.ps1` turns the stamp on.
-import "./src/load-env.js";
+// Loads this repository's .env (a development tool, run here; the server
+// itself reads only UMBSOCIAL_ENV_FILE), so the target-major stamp (below) can
+// ask the site which Umbraco it is. Only `scripts/generate.ps1` turns the stamp on.
+import { config } from "dotenv";
+
+config({ quiet: true });
 
 import { defineConfig, type HookFunction } from "orval";
 import {
