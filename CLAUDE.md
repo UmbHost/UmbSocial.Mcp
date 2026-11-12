@@ -42,8 +42,12 @@ Tool descriptions, the README and docs are fluent British English. Read them bac
 
 ## Commands
 
+The generated client (`src/umbraco-api/api/generated/`) and the Swagger snapshot it comes from are committed. Never edit them by hand: regenerate.
+
 ```bash
 npm run compile   # type-check
 npm test          # unit tests (MSW)
 npm run build     # tsup, then the SDK's tool-types generator
+npm run generate  # the client from the committed Swagger snapshot (no site needed)
+./scripts/generate.ps1 -SiteUrl https://localhost:44391   # refresh the snapshot from a running site, then generate
 ```

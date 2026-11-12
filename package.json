@@ -20,6 +20,7 @@
     "postbuild": "umbraco-mcp-generate-types",
     "compile": "tsc --noEmit",
     "watch": "tsup --config tsup.config.ts --watch",
+    "generate": "orval --config orval.config.ts",
     "inspect": "npx @modelcontextprotocol/inspector node dist/index.js",
     "test": "node --experimental-vm-modules node_modules/jest/bin/jest.js --testPathPatterns=__tests__ --runInBand"
   },
@@ -49,6 +50,7 @@
     "@types/node": "22.20.5",
     "jest": "30.5.2",
     "msw": "2.15.0",
+    "orval": "8.45.0",
     "rimraf": "6.1.3",
     "ts-jest": "29.4.15",
     "tsup": "8.5.1",

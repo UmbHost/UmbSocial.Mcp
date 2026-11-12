@@ -17,6 +17,10 @@ import {
   configureVersionCheckHook,
   getVersionCheckMessage,
   registerToolCollection,
+  configureApiClient,
+  discoverProxiedTools,
+  createProxyHandler,
+  jsonSchemaObjectToZodObject,
   UmbracoManagementClient,
   CAPTURE_RAW_HTTP_RESPONSE,
   SERVER_INFORMATION_PATH,
@@ -26,6 +30,9 @@ import {
 } from "@umbraco-cms/mcp-server-sdk";
 
 import { collections } from "./collections.js";
+import { getSocialApi } from "./umbraco-api/api/client.js";
+import { mcpClientManager } from "./umbraco-api/mcp-client.js";
+import { mcpServers } from "./config/mcp-servers.js";
 import {
   allModes,
   allModeNames,
@@ -80,6 +87,9 @@ if (socialConfig) {
     fetchInitError = error;
   }
 }
+
+// The SDK's API helpers (executeGetApiCall and the rest) call the generated client.
+configureApiClient(() => getSocialApi());
 
 clearConfigCache();
 const serverConfig = await loadServerConfig(true);
@@ -174,18 +184,63 @@ for (const collection of collections) {
   }
 }
 
+// ============================================================================
+// The chained CMS server (read-only, narrowed; see config/mcp-servers.ts)
+// ============================================================================
+
+async function registerChainedTools(): Promise<number> {
+  if (!socialConfig) return 0;
+
+  const chained = mcpServers(socialConfig);
+  for (const config of chained) {
+    mcpClientManager.registerServer(config);
+  }
+  if (chained.length === 0) return 0;
+
+  try {
+    const proxiedTools = await discoverProxiedTools(mcpClientManager);
+    for (const pt of proxiedTools) {
+      // As Umbraco's hosted server registers them: the chained tool's own input
+      // schema, so the client sees its parameters.
+      server.registerTool(
+        pt.prefixedName,
+        {
+          description: `[Proxied from ${pt.serverName}] ${pt.originalTool.description || "No description"}`,
+          inputSchema: jsonSchemaObjectToZodObject(pt.originalTool.inputSchema),
+        },
+        // The SDK types the proxy's result loosely; the chained server returns MCP results.
+        createProxyHandler(mcpClientManager, pt.serverName, pt.originalTool.name) as never,
+      );
+    }
+    return proxiedTools.length;
+  } catch (error) {
+    // Social tools still work without the chained server.
+    console.error(`${SERVER_NAME}: the chained CMS server's tools aren't available:`, error);
+    return 0;
+  }
+}
+
 async function main() {
+  const chainedToolCount = await registerChainedTools();
+
+  // After every registerTool call, so the "tools" capability is advertised.
   useDraft202012ToolSchemas(server);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
   console.error(
-    `${SERVER_NAME} started with ${registeredToolCount} tool(s) from ${collections.length} collection(s)`,
+    `${SERVER_NAME} started with ${registeredToolCount} tool(s) from ${collections.length} collection(s)` +
+      ` and ${chainedToolCount} chained CMS tool(s)`,
   );
 }
 
-process.on("SIGINT", () => process.exit(0));
-process.on("SIGTERM", () => process.exit(0));
+async function shutdown() {
+  await mcpClientManager.disconnectAll();
+  process.exit(0);
+}
+
+process.on("SIGINT", shutdown);
+process.on("SIGTERM", shutdown);
 
 main().catch((error) => {
   console.error(`${SERVER_NAME}: failed to start:`, error);

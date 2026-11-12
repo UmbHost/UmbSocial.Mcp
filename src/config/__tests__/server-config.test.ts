@@ -112,7 +112,10 @@ describe("loadSocialConfig", () => {
     const error = failureOf({ ...good, UMBSOCIAL_ENABLE_SLICES: "approve,publish" });
 
     expect(error.message).toContain("UMBSOCIAL_ENABLE_SLICES");
-    expect(error.message).toContain("publish");
+    expect(error.message).toContain("approve");
+    expect(error.message).toContain("resolve");
+    // The value is never echoed, however harmless it looks.
+    expect(error.message).not.toContain("publish");
   });
 
   it("chaining_is_off_only_when_disabled", () => {

@@ -3,9 +3,10 @@
 /**
  * The Umbraco major version this server's generated tools target.
  *
- * Placeholder committed with the project scaffold so it compiles before
- * anything has been generated. NOT reported by any Umbraco — run `npm run
- * generate` against your instance to replace it.
+ * Read from the Umbraco instance this server's tools were generated against,
+ * via `GET /umbraco/management/api/v1/server/information`.
+ *
+ * Reported version: 17.6.2+7415e8c.
  *
  * Passed to `checkUmbracoVersion` at startup, which blocks tool execution when
  * the connected instance's major differs. Set `UMBRACO_EXPECTED_MAJOR` (or

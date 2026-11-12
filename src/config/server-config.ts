@@ -77,11 +77,10 @@ function readEnabledSlices(env: NodeJS.ProcessEnv): Set<DefaultOffSlice> {
   const known = DEFAULT_OFF_SLICES as readonly string[];
   const unknown = names.filter((name) => !known.includes(name));
   if (unknown.length > 0) {
-    // A slice name is safe to repeat, but a value that isn't one may be anything
-    // pasted by mistake, so only short plain names are echoed.
-    const shown = unknown.map((name) => (/^[a-z-]{1,20}$/.test(name) ? name : "(an unrecognised value)"));
+    // The value may be anything pasted by mistake (even a secret), so it is never
+    // echoed: the message names only the slices that are allowed.
     throw new ConfigError(
-      `UMBSOCIAL_ENABLE_SLICES has an unknown slice: ${shown.join(", ")}. Use any of: ${DEFAULT_OFF_SLICES.join(", ")}.`,
+      `UMBSOCIAL_ENABLE_SLICES names a slice that can't be enabled. Use any of: ${DEFAULT_OFF_SLICES.join(", ")}.`,
     );
   }
 
