@@ -17,7 +17,7 @@
   "scripts": {
     "clean": "rimraf dist",
     "build": "tsup --config tsup.config.ts",
-    "postbuild": "umbraco-mcp-generate-types",
+    "postbuild": "node scripts/generate-tool-types.mjs",
     "compile": "tsc --noEmit",
     "watch": "tsup --config tsup.config.ts --watch",
     "generate": "orval --config orval.config.ts",
@@ -30,7 +30,8 @@
     "node": ">=22.3.0"
   },
   "files": [
-    "dist"
+    "dist",
+    "npm-shrinkwrap.json"
   ],
   "keywords": [
     "Umbraco",
