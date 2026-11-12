@@ -1,7 +1,7 @@
 import type { JestConfigWithTsJest } from "ts-jest";
 
 const config: JestConfigWithTsJest = {
-  displayName: "template",
+  displayName: "umbsocial-mcp",
   preset: "ts-jest/presets/js-with-ts-esm",
   testEnvironment: "node",
   maxWorkers: 1,

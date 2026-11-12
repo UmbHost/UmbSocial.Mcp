@@ -1,42 +1,23 @@
 /**
- * Tool Slice Registry
+ * Tool slice registry: the single source of truth for slice names.
  *
- * Defines all valid slice names for categorizing tools by operation type.
- * Extends the base slices from the toolkit with domain-specific slices.
- *
- * Slices are assigned explicitly on each tool via the `slices` property.
- * This is the SINGLE SOURCE OF TRUTH for slice names in this project.
+ * Two slices are off unless asked for: `approve` (approve and return a post)
+ * and `resolve` (retry a target and mark it published). Both act on review or
+ * on live networks. See `DEFAULT_OFF_SLICES` and `applyDefaultOffSlices`.
  */
 
 import { baseSliceNames } from "@umbraco-cms/mcp-server-sdk";
 
-/**
- * Tool slice names for this project.
- * Extends base CRUD slices with domain-specific operations.
- */
-export const toolSliceNames = [
-  // Base slices from toolkit (create, read, update, delete, list)
-  ...baseSliceNames,
+export const toolSliceNames = [...baseSliceNames, "approve", "resolve"] as const;
 
-  // Query
-  'search',
+export type ToolSliceName = (typeof toolSliceNames)[number];
 
-  // Add your slices here as you build out your MCP server
-  // 'tree', 'publish', 'move', 'copy', etc.
-] as const;
+/** All valid slice names, including the SDK's `other` catch-all. */
+export const allSliceNames: readonly string[] = [...toolSliceNames, "other"];
 
-/**
- * Valid slice name type for compile-time safety.
- */
-export type ToolSliceName = typeof toolSliceNames[number];
+export type ExtendedSliceName = ToolSliceName | "other";
 
-/**
- * All valid slice names including 'other' catch-all.
- * Tools with empty slices array are categorized as 'other'.
- */
-export const allSliceNames: readonly string[] = [...toolSliceNames, 'other'];
+/** Slices whose tools register only when `UMBSOCIAL_ENABLE_SLICES` names them. */
+export const DEFAULT_OFF_SLICES = ["approve", "resolve"] as const;
 
-/**
- * Extended slice name type including 'other'.
- */
-export type ExtendedSliceName = ToolSliceName | 'other';
+export type DefaultOffSlice = (typeof DEFAULT_OFF_SLICES)[number];

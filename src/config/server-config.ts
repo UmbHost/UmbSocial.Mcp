@@ -1,67 +1,143 @@
 /**
- * Server Configuration
+ * Server configuration.
  *
- * This module demonstrates how to extend the base Umbraco MCP config
- * with custom configuration fields specific to your MCP server.
- *
- * Custom fields support:
- * - string: Simple string values
- * - boolean: True/false flags
- * - csv: Comma-separated values parsed into arrays
- * - csv-path: Comma-separated paths, resolved to absolute paths
+ * `loadServerConfig` is the template's wrapper around the SDK's
+ * `getServerConfig` (filtering settings and CLI flags). `loadSocialConfig`
+ * validates what this server needs before anything else runs.
  */
 
 import {
   getServerConfig,
+  isLoopbackUrl,
+  type CollectionConfiguration,
   type ConfigFieldDefinition,
   type UmbracoServerConfig,
   type GetServerConfigResult,
 } from "@umbraco-cms/mcp-server-sdk";
-
-// ============================================================================
-// Custom Config Interface
-// ============================================================================
+import { DEFAULT_OFF_SLICES, type DefaultOffSlice } from "./slice-registry.js";
 
 /**
- * Custom configuration specific to this MCP server.
- * Define your own fields here - they will be parsed from CLI args or env vars.
+ * A configuration this server refuses to start with. The message names the
+ * variable and never contains any value.
  */
-export interface MyServerCustomConfig {
-  /** Disable MCP server chaining (useful for testing or isolated deployments) */
-  disableMcpChaining?: boolean;
-  /**
-   * Overrides the Umbraco major version this server targets (e.g. "17") for the
-   * startup version-compatibility check: connecting to a different major warns
-   * and blocks the first tool call until the user retries.
-   *
-   * Leave unset (the normal case) to use `UMBRACO_TARGET_MAJOR` from
-   * `config/umbraco-target.generated.ts`, which `npm run generate` derives from
-   * the OpenAPI spec's `info.version` — i.e. the Umbraco version the tools were
-   * actually generated against. Set this only to deliberately point the server
-   * at a different Umbraco major.
-   */
-  expectedUmbracoMajor?: string;
-  /** Enable experimental features */
-  experimentalFeatures?: boolean;
-  /** Custom API endpoints to enable */
-  customEndpoints?: string[];
-  /** External service API key */
-  externalApiKey?: string;
-  /** Maximum items per page for list operations */
-  maxPageSize?: string;
+export class ConfigError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "ConfigError";
+  }
+}
+
+export interface SocialConfig {
+  baseUrl: URL;
+  clientId: string;
+  clientSecret: string;
+  enabledSlices: Set<DefaultOffSlice>;
+  chaining: boolean;
+}
+
+function required(env: NodeJS.ProcessEnv, name: string): string {
+  const value = env[name]?.trim();
+  if (!value) {
+    throw new ConfigError(`${name} is required. Set it in the environment or in a .env file.`);
+  }
+  return value;
+}
+
+function readBaseUrl(env: NodeJS.ProcessEnv): URL {
+  const raw = required(env, "UMBRACO_BASE_URL");
+
+  let url: URL;
+  try {
+    url = new URL(raw);
+  } catch {
+    throw new ConfigError("UMBRACO_BASE_URL is not a valid URL. Use the site's address, e.g. https://example.com.");
+  }
+
+  if (url.username || url.password) {
+    throw new ConfigError("UMBRACO_BASE_URL must not contain a user name or password. Use the API user's client credentials.");
+  }
+
+  const https = url.protocol === "https:";
+  const loopbackHttp = url.protocol === "http:" && isLoopbackUrl(url.href);
+  if (!https && !loopbackHttp) {
+    throw new ConfigError(
+      "UMBRACO_BASE_URL must use https. Plain http is allowed only for localhost, 127.0.0.1 or [::1].",
+    );
+  }
+
+  return url;
+}
+
+function readEnabledSlices(env: NodeJS.ProcessEnv): Set<DefaultOffSlice> {
+  const names = (env.UMBSOCIAL_ENABLE_SLICES ?? "")
+    .split(",")
+    .map((name) => name.trim().toLowerCase())
+    .filter((name) => name.length > 0);
+
+  const known = DEFAULT_OFF_SLICES as readonly string[];
+  const unknown = names.filter((name) => !known.includes(name));
+  if (unknown.length > 0) {
+    // A slice name is safe to repeat, but a value that isn't one may be anything
+    // pasted by mistake, so only short plain names are echoed.
+    const shown = unknown.map((name) => (/^[a-z-]{1,20}$/.test(name) ? name : "(an unrecognised value)"));
+    throw new ConfigError(
+      `UMBSOCIAL_ENABLE_SLICES has an unknown slice: ${shown.join(", ")}. Use any of: ${DEFAULT_OFF_SLICES.join(", ")}.`,
+    );
+  }
+
+  return new Set(names as DefaultOffSlice[]);
+}
+
+/**
+ * Reads and checks this server's configuration from the environment.
+ *
+ * Hand-rolled because the SDK lacks it: `getServerConfig` prints a message and
+ * calls `process.exit(1)` for a missing value (so it can't be tested and doesn't
+ * throw), and it accepts plain http to a remote site.
+ */
+export function loadSocialConfig(env: NodeJS.ProcessEnv): SocialConfig {
+  const baseUrl = readBaseUrl(env);
+  const clientId = required(env, "UMBRACO_CLIENT_ID");
+  const clientSecret = required(env, "UMBRACO_CLIENT_SECRET");
+  const enabledSlices = readEnabledSlices(env);
+  const chaining = env.DISABLE_MCP_CHAINING?.trim().toLowerCase() !== "true";
+
+  return { baseUrl, clientId, clientSecret, enabledSlices, chaining };
+}
+
+/**
+ * Turns off the default-off slices that `UMBSOCIAL_ENABLE_SLICES` didn't name.
+ *
+ * Hand-rolled because the SDK lacks slices that are off unless asked for:
+ * `UMBRACO_INCLUDE_SLICES` keeps only the slices it names, hiding every other
+ * tool, so it can't opt in to one slice. This adds to `disabledSlices` and keeps
+ * whatever the user excluded with `UMBRACO_EXCLUDE_SLICES`.
+ */
+export function applyDefaultOffSlices(
+  config: CollectionConfiguration,
+  enabledSlices: ReadonlySet<DefaultOffSlice>,
+): CollectionConfiguration {
+  const off = DEFAULT_OFF_SLICES.filter((slice) => !enabledSlices.has(slice));
+  return {
+    ...config,
+    disabledSlices: [...new Set([...config.disabledSlices, ...off])],
+  };
 }
 
 // ============================================================================
-// Custom Field Definitions
+// The SDK's config (filtering settings and CLI flags)
 // ============================================================================
 
-/**
- * Define additional config fields for this server.
- * Each field automatically gets:
- * - A CLI argument (--my-experimental-features)
- * - An environment variable (MY_EXPERIMENTAL_FEATURES)
- * - Automatic parsing based on type
- */
+export interface SocialServerCustomConfig {
+  /** Turns off chaining to the CMS Developer MCP. */
+  disableMcpChaining?: boolean;
+  /**
+   * Overrides the Umbraco major this server targets for the start-up version
+   * check. Leave unset to use `UMBRACO_TARGET_MAJOR`.
+   */
+  expectedUmbracoMajor?: string;
+}
+
 const customFields: ConfigFieldDefinition[] = [
   {
     name: "disableMcpChaining",
@@ -75,67 +151,16 @@ const customFields: ConfigFieldDefinition[] = [
     cliFlag: "umbraco-expected-major",
     type: "string",
   },
-  {
-    name: "experimentalFeatures",
-    envVar: "MY_EXPERIMENTAL_FEATURES",
-    cliFlag: "my-experimental-features",
-    type: "boolean",
-  },
-  {
-    name: "customEndpoints",
-    envVar: "MY_CUSTOM_ENDPOINTS",
-    cliFlag: "my-custom-endpoints",
-    type: "csv",
-  },
-  {
-    name: "externalApiKey",
-    envVar: "MY_EXTERNAL_API_KEY",
-    cliFlag: "my-external-api-key",
-    type: "string",
-  },
-  {
-    name: "maxPageSize",
-    envVar: "MY_MAX_PAGE_SIZE",
-    cliFlag: "my-max-page-size",
-    type: "string",
-  },
 ];
 
-// ============================================================================
-// Config Loading
-// ============================================================================
-
 export interface ServerConfig {
-  /** Base Umbraco MCP configuration */
   umbraco: UmbracoServerConfig;
-  /** Custom configuration for this server */
-  custom: MyServerCustomConfig;
-  /** CLI introspection flags */
+  custom: SocialServerCustomConfig;
   cliFlags: GetServerConfigResult["cliFlags"];
 }
 
 let cachedConfig: ServerConfig | null = null;
 
-/**
- * Load server configuration from CLI arguments and environment variables.
- *
- * @param isStdioMode - Whether the server is running in stdio mode (suppresses logging)
- * @returns Combined base and custom configuration
- *
- * @example
- * ```typescript
- * const { umbraco, custom } = loadServerConfig(true);
- *
- * // Access base Umbraco config
- * console.log(umbraco.auth.baseUrl);
- * console.log(umbraco.readonly);
- *
- * // Access custom config
- * if (custom.experimentalFeatures) {
- *   enableExperimentalFeatures();
- * }
- * ```
- */
 export async function loadServerConfig(isStdioMode: boolean): Promise<ServerConfig> {
   if (cachedConfig) {
     return cachedConfig;
@@ -147,23 +172,13 @@ export async function loadServerConfig(isStdioMode: boolean): Promise<ServerConf
 
   cachedConfig = {
     umbraco: config,
-    custom: custom as MyServerCustomConfig,
+    custom: custom as SocialServerCustomConfig,
     cliFlags,
   };
 
   return cachedConfig;
 }
 
-/**
- * Clear cached config (useful for testing)
- */
 export function clearConfigCache(): void {
   cachedConfig = null;
-}
-
-/**
- * Get the custom field definitions (useful for testing/documentation)
- */
-export function getCustomFieldDefinitions(): ConfigFieldDefinition[] {
-  return [...customFields];
 }

@@ -1,22 +1,15 @@
 #!/usr/bin/env node
 /**
- * MCP Server Entry Point
- *
- * This file sets up and starts the MCP server.
- * Customize this to add your tool collections.
+ * UmbSocial MCP server: entry point (stdio).
  */
 
 import "./load-env.js";
 import { McpServer, type ToolCallback } from "@modelcontextprotocol/sdk/server/mcp.js";
 import packageJson from "../package.json" with { type: "json" };
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import type { CallToolResult } from "@modelcontextprotocol/sdk/types.js";
 import {
-  configureApiClient,
   initializeUmbracoFetch,
   createToolAnnotations,
-  discoverProxiedTools,
-  parseProxiedToolName,
   createCollectionConfigLoader,
   shouldIncludeTool,
   handleCliCommands,
@@ -32,87 +25,85 @@ import {
   type HttpResponse,
 } from "@umbraco-cms/mcp-server-sdk";
 
-// Import the Orval-generated API client
-import { getExampleUmbracoAddOnAPI } from "./umbraco-api/api/generated/exampleApi.js";
-
-// Import tool collections
-import exampleCollection from "./umbraco-api/tools/example/index.js";
-import example2Collection from "./umbraco-api/tools/example-2/index.js";
-import chainedCollection from "./umbraco-api/tools/chained/index.js";
-
-// Import MCP client manager (for chaining to other MCP servers)
-import { mcpClientManager } from "./umbraco-api/mcp-client.js";
-
-// Import MCP server chain configuration
-import { mcpServers } from "./config/mcp-servers.js";
-
-// Import registries for tool filtering
+import { collections } from "./collections.js";
 import {
   allModes,
   allModeNames,
   allSliceNames,
-  loadServerConfig,
+  applyDefaultOffSlices,
   clearConfigCache,
+  ConfigError,
+  loadServerConfig,
+  loadSocialConfig,
   UMBRACO_TARGET_MAJOR,
+  type SocialConfig,
 } from "./config/index.js";
 
-// Initialize the SDK's fetch client for real Umbraco API calls.
-// This enables the Orval-generated client to authenticate via client_credentials.
-const baseUrl = process.env.UMBRACO_BASE_URL || "http://localhost:44391";
-const clientId = process.env.UMBRACO_CLIENT_ID || "";
-const clientSecret = process.env.UMBRACO_CLIENT_SECRET || "";
-// A config the SDK refuses (e.g. TLS verification disabled for a remote site)
-// is rethrown after the offline CLI commands below, so they
-// (--list-tools, --describe-tool, --debug-config, ...) still work to diagnose it.
-let fetchInitError: unknown;
-if (clientId) {
+const SERVER_NAME = "umbsocial-mcp";
+
+// ============================================================================
+// Configuration
+// ============================================================================
+
+// The SDK's offline introspection flags work without credentials, as they do
+// in `getServerConfig`, so the check is skipped for them.
+const INTROSPECTION_FLAGS = ["--list-tools", "--describe-tool", "--generate-context", "--debug-config"];
+const introspectionOnly = process.argv.some((arg) =>
+  INTROSPECTION_FLAGS.some((flag) => arg === flag || arg.startsWith(`${flag}=`)),
+);
+
+let socialConfig: SocialConfig | null = null;
+if (!introspectionOnly) {
   try {
-    initializeUmbracoFetch({ baseUrl, clientId, clientSecret });
+    socialConfig = loadSocialConfig(process.env);
+  } catch (error) {
+    if (error instanceof ConfigError) {
+      console.error(`${SERVER_NAME}: ${error.message}`);
+      process.exit(1);
+    }
+    throw error;
+  }
+}
+
+// A config the SDK refuses (e.g. TLS verification turned off for a remote
+// site) is rethrown after the offline CLI commands below, so they still work
+// to diagnose it.
+let fetchInitError: unknown;
+if (socialConfig) {
+  try {
+    initializeUmbracoFetch({
+      baseUrl: socialConfig.baseUrl.href,
+      clientId: socialConfig.clientId,
+      clientSecret: socialConfig.clientSecret,
+    });
   } catch (error) {
     fetchInitError = error;
   }
 }
 
-// Configure the API client for use with toolkit helpers
-// This connects your generated Orval client to executeGetApiCall, executeVoidApiCall, etc.
-configureApiClient(() => getExampleUmbracoAddOnAPI());
-
-// ============================================================================
-// Tool Filtering Setup
-// ============================================================================
-
-// Clear config cache to ensure fresh config for each server start
 clearConfigCache();
-
-// Load server configuration (includes filtering settings from env vars)
 const serverConfig = await loadServerConfig(true);
 
-// Create collection config loader with our registries
 const configLoader = createCollectionConfigLoader({
   modeRegistry: allModes,
   allModeNames,
   allSliceNames,
 });
 
-// Load filtering configuration from server config
-const filterConfig: CollectionConfiguration = configLoader.loadFromConfig(serverConfig.umbraco);
+const filterConfig: CollectionConfiguration = applyDefaultOffSlices(
+  configLoader.loadFromConfig(serverConfig.umbraco),
+  socialConfig?.enabledSlices ?? new Set(),
+);
 
 // ============================================================================
-// CLI Introspection (runs before server start, exits immediately)
+// CLI introspection (prints and exits when a flag is set)
 // ============================================================================
 
-const collections = [exampleCollection, example2Collection, chainedCollection];
-
-// --call talks to Umbraco, so it reports a refused config instead of running the tool.
 if (fetchInitError && serverConfig.cliFlags?.callTool) throw fetchInitError;
 
-// handleCliCommands checks --list-tools, --describe-tool, --generate-context, --call.
-// If any flag is set it prints output, waits for it to flush, and exits
-// (0 on success, 1 on error).
-// Otherwise it returns and the server continues to start.
 await handleCliCommands(collections, {
   cliFlags: serverConfig.cliFlags,
-  serverName: "my-umbraco-mcp",
+  serverName: SERVER_NAME,
   serverVersion: packageJson.version,
   filterConfig,
   serverConfig: serverConfig.umbraco,
@@ -121,43 +112,13 @@ await handleCliCommands(collections, {
 if (fetchInitError) throw fetchInitError;
 
 // ============================================================================
-// Version Check
+// Version check
 // ============================================================================
 //
-// Verify the connected Umbraco major version matches the major version this
-// server's tools were generated against. `expectedUmbracoMajor` is a required
-// SDK field, so this can't be silently left off.
-//
-// The value comes from `UMBRACO_TARGET_MAJOR` in
-// `config/umbraco-target.generated.ts` — auto-generated by `npm run generate`,
-// which reads it from the Umbraco instance in `.env` (the spec cannot supply it:
-// every Umbraco spec hard-codes `info.version` to "Latest"). Regenerate against
-// a newer Umbraco and the constant follows automatically; there is nothing to
-// keep in sync by hand. `UMBRACO_EXPECTED_MAJOR` /
-// `--umbraco-expected-major` (see `config/server-config.ts`) overrides it at
-// runtime for a project deliberately targeting a different Umbraco major.
-//
-// It deliberately does *not* compare against this package's own version:
-// a new project starts at "1.0.0", which says nothing about which Umbraco
-// major it targets, so an implicit comparison falsely blocked the first tool
-// call of every new server (see Umbraco-MCP-Base#220).
-//
-// `checkUmbracoVersion` never throws and always logs a mismatch/error to
-// stderr (console.error — stdio-transport safe), but that alone isn't enough
-// to surface the warning to the user or pause tool execution. Two more calls
-// close that gap:
-//   - `configureVersionCheckHook()` bridges the result into
-//     `withPreExecutionCheck` (applied to every tool via
-//     `withStandardDecorators`), so a mismatch blocks the first tool call
-//     with the warning until the user deliberately retries. Safe to call
-//     unconditionally — it never blocks anything when the versions match.
-//   - `getVersionCheckMessage()` lets us fold the same warning into the
-//     server's `instructions`, so it reaches the model/user directly rather
-//     than only the server log.
-// Skipped when no client credentials are configured (matches the
-// `initializeUmbracoFetch` gate above) so CLI introspection / offline usage
-// never makes a live network call.
-if (clientId) {
+// A different Umbraco major blocks the first tool call with a warning until the
+// user retries (`configureVersionCheckHook`), and the warning is folded into
+// the server's instructions. `UMBRACO_EXPECTED_MAJOR` overrides the target.
+if (socialConfig) {
   await checkUmbracoVersion({
     mcpVersion: packageJson.version,
     expectedUmbracoMajor: serverConfig.custom.expectedUmbracoMajor ?? UMBRACO_TARGET_MAJOR,
@@ -177,121 +138,56 @@ if (clientId) {
 const versionCheckMessage = getVersionCheckMessage();
 
 // ============================================================================
-// MCP Server Setup
+// MCP server and tools
 // ============================================================================
 
-// Create MCP server.
-// Pass an optional `instructions` string in the second argument to send
-// server-level guidance to clients during `initialize`. Most clients fold
-// this into the model's system prompt, so it applies implicitly without
-// per-tool repetition. Mirror the same value in `worker.ts` so stdio and
-// hosted deployments behave consistently.
-//
-// Here it's used to surface a version-mismatch warning when one was detected
-// (null otherwise). Extend the string if you also want custom guidance, e.g.:
-// [versionCheckMessage, "Refer to items by name, not by ID."].filter(Boolean).join("\n\n")
 const server = new McpServer(
-  { name: "my-umbraco-mcp", version: packageJson.version },
+  { name: SERVER_NAME, version: packageJson.version },
   versionCheckMessage ? { instructions: versionCheckMessage } : undefined,
 );
-
-// ============================================================================
-// Register Tools with Filtering
-// ============================================================================
 
 let registeredToolCount = 0;
 
 for (const collection of collections) {
   const collectionName = collection.metadata.name;
-
-  // Get tools for current user (pass user context if needed)
   const tools = collection.tools({});
 
   for (const tool of tools) {
-    // Check if tool should be included based on filtering config
     if (!shouldIncludeTool(tool, { collectionName, config: filterConfig })) {
       continue;
     }
 
-    // Build annotations from tool definition
-    const annotations = createToolAnnotations(tool);
-
-    // Record the owning collection so telemetry spans can be grouped by it.
-    // Only this loop knows both the tool and its collection — the decorators
-    // are applied in each tool's own file, before collections are assembled.
     registerToolCollection(tool.name, collectionName);
 
-    // Register tool with MCP server using registerTool API
-    server.registerTool(tool.name, {
-      description: tool.description,
-      inputSchema: tool.inputSchema,
-      outputSchema: tool.outputSchema,
-      annotations,
-    }, tool.handler as ToolCallback<typeof tool.inputSchema>);
+    server.registerTool(
+      tool.name,
+      {
+        description: tool.description,
+        inputSchema: tool.inputSchema,
+        outputSchema: tool.outputSchema,
+        annotations: createToolAnnotations(tool),
+      },
+      tool.handler as ToolCallback<typeof tool.inputSchema>,
+    );
 
     registeredToolCount++;
   }
 }
 
-// Start the server
 async function main() {
-  // Discover and register proxied tools from chained MCP servers
-  // Skip if chaining is disabled via config (DISABLE_MCP_CHAINING=true)
-  const chainingEnabled = mcpServers.length > 0 && !serverConfig.custom.disableMcpChaining;
-
-  if (chainingEnabled) {
-    try {
-      const proxiedTools = await discoverProxiedTools(mcpClientManager);
-
-      for (const pt of proxiedTools) {
-        // Register proxied tool with forwarding handler
-        // Note: We don't pass inputSchema since validation happens on the chained server
-        // and the MCP SDK expects Zod schemas, not raw JSON Schema objects
-        server.registerTool(
-          pt.prefixedName,
-          {
-            description: `[Proxied from ${pt.serverName}] ${pt.originalTool.description || "No description"}`,
-          },
-          async (args: Record<string, unknown>): Promise<CallToolResult> => {
-            const { serverName, toolName } = parseProxiedToolName(pt.prefixedName);
-            const result = await mcpClientManager.callTool(serverName, toolName, args);
-            return result as CallToolResult;
-          }
-        );
-      }
-
-      if (proxiedTools.length > 0) {
-        console.error(`Registered ${proxiedTools.length} proxied tool(s) from chained MCP servers`);
-      }
-    } catch (error) {
-      console.error("Warning: Failed to discover proxied tools:", error);
-      // Continue without proxied tools - local tools still work
-    }
-  }
-
-  // Called once, after every registerTool call above (main collections at
-  // module load, chained tools just above) has completed — McpServer only
-  // advertises the "tools" capability required to override ListTools at
-  // all once at least one tool has actually been registered.
   useDraft202012ToolSchemas(server);
 
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error(`MCP Server started with ${registeredToolCount} tool(s) from ${collections.length} collection(s)`);
+  console.error(
+    `${SERVER_NAME} started with ${registeredToolCount} tool(s) from ${collections.length} collection(s)`,
+  );
 }
 
-// Cleanup on shutdown
-process.on("SIGINT", async () => {
-  await mcpClientManager.disconnectAll();
-  process.exit(0);
-});
-
-process.on("SIGTERM", async () => {
-  await mcpClientManager.disconnectAll();
-  process.exit(0);
-});
+process.on("SIGINT", () => process.exit(0));
+process.on("SIGTERM", () => process.exit(0));
 
 main().catch((error) => {
-  console.error("Failed to start MCP server:", error);
+  console.error(`${SERVER_NAME}: failed to start:`, error);
   process.exit(1);
 });

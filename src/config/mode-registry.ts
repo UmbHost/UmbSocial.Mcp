@@ -1,73 +1,29 @@
 /**
- * Tool Mode Registry
+ * Tool mode registry: the single source of truth for mode names.
  *
- * Defines tool modes that group tools by domain/functionality.
- * Modes map to collections, allowing users to enable groups of related tools.
- *
- * This is the SINGLE SOURCE OF TRUTH for mode definitions in this project.
+ * `social` works on any UmbSocial site; `social-pro` registers its tools only
+ * when the site's edition is licensed.
  */
 
 import type { ToolModeDefinition } from "@umbraco-cms/mcp-server-sdk";
 
-/**
- * Tool mode definitions for this project.
- *
- * Each mode groups related tool collections together.
- * Users can enable modes in their config to include all tools in those collections.
- *
- * @example
- * ```typescript
- * // In server config
- * {
- *   toolModes: ['content', 'media']  // Enables all tools in content and media collections
- * }
- * ```
- */
 export const toolModes: ToolModeDefinition[] = [
   {
-    name: 'example',
-    displayName: 'Example Tools',
-    description: 'Example CRUD operations for demonstration',
-    collections: ['example']
+    name: "social",
+    displayName: "Social",
+    description: "The Social calendar: channels, campaigns and posts",
+    collections: ["social"],
   },
   {
-    name: 'example-2',
-    displayName: 'Example-2 Tools',
-    description: 'Second example collection for testing',
-    collections: ['example-2']
+    name: "social-pro",
+    displayName: "Social Pro",
+    description: "UmbSocial Pro: approvals, templates, tags, hashtags, UTM, short links and metrics trends",
+    collections: ["social-pro"],
   },
-  {
-    name: 'umbraco-server',
-    displayName: 'Umbraco Server',
-    description: 'Server information and status from the Umbraco Management API',
-    collections: ['umbraco-server']
-  },
-  // Add your modes here as you build out your MCP server
-  // {
-  //   name: 'content',
-  //   displayName: 'Content Management',
-  //   description: 'Document creation, editing, and versioning',
-  //   collections: ['document', 'document-version', 'document-blueprint']
-  // },
-  // {
-  //   name: 'media',
-  //   displayName: 'Media Management',
-  //   description: 'Media library and file operations',
-  //   collections: ['media', 'imaging', 'temporary-file']
-  // },
 ];
 
-/**
- * All mode definitions (alias for toolModes).
- */
 export const allModes: ToolModeDefinition[] = [...toolModes];
 
-/**
- * All valid mode names for configuration validation.
- */
-export const allModeNames: readonly string[] = toolModes.map(m => m.name);
+export const allModeNames: readonly string[] = toolModes.map((m) => m.name);
 
-/**
- * Valid mode name type.
- */
-export type ToolModeName = typeof allModeNames[number];
+export type ToolModeName = (typeof allModeNames)[number];

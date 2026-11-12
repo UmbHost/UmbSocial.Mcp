@@ -1,253 +1,125 @@
-/**
- * Server Config Integration Tests
- *
- * Tests for the extensible config system using custom fields.
- * Demonstrates how consuming packages can add their own config fields.
- *
- * Note: These tests mock getServerConfig from the toolkit since
- * the toolkit's own tests verify the core config parsing works correctly.
- * These tests verify the server-config module's interface and caching.
- */
+import { describe, it, expect } from "@jest/globals";
+import {
+  DEFAULT_COLLECTION_CONFIG,
+  shouldIncludeTool,
+  type CollectionConfiguration,
+} from "@umbraco-cms/mcp-server-sdk";
+import { ConfigError, applyDefaultOffSlices, loadSocialConfig } from "../server-config.js";
 
-import { jest, describe, it, expect, beforeEach } from "@jest/globals";
+const SECRET = "s3cr3t-value-that-must-never-leak";
 
-// Mock the toolkit's getServerConfig before importing our module
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const mockGetServerConfig = jest.fn<(...args: any[]) => any>();
-jest.unstable_mockModule("@umbraco-cms/mcp-server-sdk", () => ({
-  getServerConfig: mockGetServerConfig,
-}));
+const good = {
+  UMBRACO_BASE_URL: "https://social.example.com",
+  UMBRACO_CLIENT_ID: "umbraco-back-office-social-mcp",
+  UMBRACO_CLIENT_SECRET: SECRET,
+};
 
-// Import our module after setting up mocks
-const { loadServerConfig, clearConfigCache, getCustomFieldDefinitions } =
-  await import("../server-config.js");
+function failureOf(env: NodeJS.ProcessEnv): ConfigError {
+  try {
+    loadSocialConfig(env);
+  } catch (error) {
+    expect(error).toBeInstanceOf(ConfigError);
+    return error as ConfigError;
+  }
+  throw new Error("expected a ConfigError");
+}
 
-describe("Server Config", () => {
-  beforeEach(() => {
-    // Clear config cache and reset mocks before each test
-    clearConfigCache();
-    mockGetServerConfig.mockReset();
+function baseConfig(overrides: Partial<CollectionConfiguration> = {}): CollectionConfiguration {
+  return { ...DEFAULT_COLLECTION_CONFIG, ...overrides };
+}
+
+function included(slice: string, config: CollectionConfiguration): boolean {
+  return shouldIncludeTool({ name: `a-${slice}-tool`, slices: [slice] }, { collectionName: "social", config });
+}
+
+describe("loadSocialConfig", () => {
+  it("reads a good config", () => {
+    const config = loadSocialConfig(good);
+
+    expect(config.baseUrl.href).toBe("https://social.example.com/");
+    expect(config.clientId).toBe(good.UMBRACO_CLIENT_ID);
+    expect(config.clientSecret).toBe(SECRET);
+    expect(config.enabledSlices.size).toBe(0);
+    expect(config.chaining).toBe(true);
   });
 
-  describe("loadServerConfig", () => {
-    it("should return combined umbraco and custom config", async () => {
-      mockGetServerConfig.mockResolvedValue({
-        config: {
-          auth: {
-            clientId: "test-client",
-            clientSecret: "test-secret",
-            baseUrl: "http://localhost:5000",
-          },
-          readonly: true,
-          configSources: {
-            clientId: "env",
-            clientSecret: "env",
-            baseUrl: "env",
-            readonly: "env",
-            envFile: "default",
-          },
-        },
-        custom: {
-          experimentalFeatures: true,
-          externalApiKey: "my-api-key",
-          customEndpoints: ["ep1", "ep2"],
-        },
-      });
+  it("a_bad_config_fails_clearly_without_the_secret", () => {
+    const cases: Array<[NodeJS.ProcessEnv, string]> = [
+      [{ ...good, UMBRACO_BASE_URL: undefined }, "UMBRACO_BASE_URL"],
+      [{ ...good, UMBRACO_BASE_URL: "  " }, "UMBRACO_BASE_URL"],
+      [{ ...good, UMBRACO_BASE_URL: "not a url" }, "UMBRACO_BASE_URL"],
+      [{ ...good, UMBRACO_BASE_URL: "ftp://social.example.com" }, "UMBRACO_BASE_URL"],
+      [{ ...good, UMBRACO_BASE_URL: `http://admin:${SECRET}@social.example.com` }, "UMBRACO_BASE_URL"],
+      [{ ...good, UMBRACO_CLIENT_ID: undefined }, "UMBRACO_CLIENT_ID"],
+      [{ ...good, UMBRACO_CLIENT_ID: "" }, "UMBRACO_CLIENT_ID"],
+      [{ ...good, UMBRACO_CLIENT_SECRET: undefined }, "UMBRACO_CLIENT_SECRET"],
+      [{ ...good, UMBRACO_CLIENT_SECRET: " \t" }, "UMBRACO_CLIENT_SECRET"],
+      [{ ...good, UMBSOCIAL_ENABLE_SLICES: SECRET }, "UMBSOCIAL_ENABLE_SLICES"],
+    ];
 
-      const { umbraco, custom } = await loadServerConfig(true);
-
-      // Verify base config
-      expect(umbraco.auth.clientId).toBe("test-client");
-      expect(umbraco.auth.baseUrl).toBe("http://localhost:5000");
-      expect(umbraco.readonly).toBe(true);
-
-      // Verify custom config
-      expect(custom.experimentalFeatures).toBe(true);
-      expect(custom.externalApiKey).toBe("my-api-key");
-      expect(custom.customEndpoints).toEqual(["ep1", "ep2"]);
-    });
-
-    it("should pass isStdioMode to getServerConfig", async () => {
-      mockGetServerConfig.mockResolvedValue({
-        config: {
-          auth: { clientId: "x", clientSecret: "x", baseUrl: "x" },
-          configSources: { clientId: "env", clientSecret: "env", baseUrl: "env", envFile: "default" },
-        },
-        custom: {},
-      });
-
-      await loadServerConfig(true);
-      expect(mockGetServerConfig).toHaveBeenCalledWith(true, expect.any(Object));
-
-      clearConfigCache();
-      await loadServerConfig(false);
-      expect(mockGetServerConfig).toHaveBeenCalledWith(false, expect.any(Object));
-    });
-
-    it("should pass additionalFields to getServerConfig", async () => {
-      mockGetServerConfig.mockResolvedValue({
-        config: {
-          auth: { clientId: "x", clientSecret: "x", baseUrl: "x" },
-          configSources: { clientId: "env", clientSecret: "env", baseUrl: "env", envFile: "default" },
-        },
-        custom: {},
-      });
-
-      await loadServerConfig(true);
-
-      expect(mockGetServerConfig).toHaveBeenCalledWith(
-        true,
-        expect.objectContaining({
-          additionalFields: expect.arrayContaining([
-            expect.objectContaining({ name: "experimentalFeatures" }),
-            expect.objectContaining({ name: "customEndpoints" }),
-            expect.objectContaining({ name: "externalApiKey" }),
-            expect.objectContaining({ name: "maxPageSize" }),
-          ]),
-        })
-      );
-    });
-
-    it("should cache config after first load", async () => {
-      mockGetServerConfig.mockResolvedValue({
-        config: {
-          auth: { clientId: "cached", clientSecret: "x", baseUrl: "x" },
-          configSources: { clientId: "env", clientSecret: "env", baseUrl: "env", envFile: "default" },
-        },
-        custom: { externalApiKey: "cached-key" },
-      });
-
-      // First call
-      const first = await loadServerConfig(true);
-      expect(mockGetServerConfig).toHaveBeenCalledTimes(1);
-
-      // Second call - should use cache
-      const second = await loadServerConfig(true);
-      expect(mockGetServerConfig).toHaveBeenCalledTimes(1);
-
-      // Both should return same data
-      expect(first.umbraco.auth.clientId).toBe("cached");
-      expect(second.umbraco.auth.clientId).toBe("cached");
-      expect(first.custom.externalApiKey).toBe("cached-key");
-      expect(second.custom.externalApiKey).toBe("cached-key");
-    });
-
-    it("should reload config after clearConfigCache", async () => {
-      mockGetServerConfig
-        .mockResolvedValueOnce({
-          config: {
-            auth: { clientId: "first", clientSecret: "x", baseUrl: "x" },
-            configSources: { clientId: "env", clientSecret: "env", baseUrl: "env", envFile: "default" },
-          },
-          custom: {},
-        })
-        .mockResolvedValueOnce({
-          config: {
-            auth: { clientId: "second", clientSecret: "x", baseUrl: "x" },
-            configSources: { clientId: "env", clientSecret: "env", baseUrl: "env", envFile: "default" },
-          },
-          custom: {},
-        });
-
-      const first = await loadServerConfig(true);
-      expect(first.umbraco.auth.clientId).toBe("first");
-
-      clearConfigCache();
-
-      const second = await loadServerConfig(true);
-      expect(second.umbraco.auth.clientId).toBe("second");
-      expect(mockGetServerConfig).toHaveBeenCalledTimes(2);
-    });
+    for (const [env, variable] of cases) {
+      const error = failureOf(env);
+      expect(error.message).toContain(variable);
+      expect(error.message).not.toContain(SECRET);
+      expect(error.message).not.toContain(good.UMBRACO_CLIENT_ID);
+    }
   });
 
-  describe("custom config interface", () => {
-    it("should handle undefined custom values", async () => {
-      mockGetServerConfig.mockResolvedValue({
-        config: {
-          auth: { clientId: "x", clientSecret: "x", baseUrl: "x" },
-          configSources: { clientId: "env", clientSecret: "env", baseUrl: "env", envFile: "default" },
-        },
-        custom: {},
-      });
+  it("http_is_allowed_only_on_loopback", () => {
+    for (const url of [
+      "http://localhost:44391",
+      "http://127.0.0.1:44391",
+      "http://[::1]:44391",
+      "https://localhost:44391",
+      "https://social.example.com",
+    ]) {
+      expect(loadSocialConfig({ ...good, UMBRACO_BASE_URL: url }).baseUrl.href).toBe(new URL(url).href);
+    }
 
-      const { custom } = await loadServerConfig(true);
-
-      expect(custom.experimentalFeatures).toBeUndefined();
-      expect(custom.externalApiKey).toBeUndefined();
-      expect(custom.customEndpoints).toBeUndefined();
-      expect(custom.maxPageSize).toBeUndefined();
-    });
-
-    it("should type custom values correctly", async () => {
-      mockGetServerConfig.mockResolvedValue({
-        config: {
-          auth: { clientId: "x", clientSecret: "x", baseUrl: "x" },
-          configSources: { clientId: "env", clientSecret: "env", baseUrl: "env", envFile: "default" },
-        },
-        custom: {
-          experimentalFeatures: true,
-          customEndpoints: ["a", "b"],
-          externalApiKey: "key",
-          maxPageSize: "50",
-        },
-      });
-
-      const { custom } = await loadServerConfig(true);
-
-      // TypeScript type checks (these verify the interface is correct)
-      const boolVal: boolean | undefined = custom.experimentalFeatures;
-      const arrVal: string[] | undefined = custom.customEndpoints;
-      const strVal: string | undefined = custom.externalApiKey;
-      const pageSize: string | undefined = custom.maxPageSize;
-
-      expect(typeof boolVal).toBe("boolean");
-      expect(Array.isArray(arrVal)).toBe(true);
-      expect(typeof strVal).toBe("string");
-      expect(typeof pageSize).toBe("string");
-    });
+    for (const url of ["http://social.example.com", "http://localhost.example.com", "http://192.168.1.10"]) {
+      expect(failureOf({ ...good, UMBRACO_BASE_URL: url }).message).toContain("https");
+    }
   });
 
-  describe("getCustomFieldDefinitions", () => {
-    it("should return all custom field definitions", () => {
-      const fields = getCustomFieldDefinitions();
+  it("approve_and_resolve_are_off_unless_enabled", () => {
+    const off = loadSocialConfig(good).enabledSlices;
+    expect([...off]).toEqual([]);
 
-      expect(fields).toHaveLength(6);
-      expect(fields.map(f => f.name)).toEqual([
-        "disableMcpChaining",
-        "expectedUmbracoMajor",
-        "experimentalFeatures",
-        "customEndpoints",
-        "externalApiKey",
-        "maxPageSize",
-      ]);
-    });
+    const offConfig = applyDefaultOffSlices(baseConfig(), off);
+    expect(included("approve", offConfig)).toBe(false);
+    expect(included("resolve", offConfig)).toBe(false);
+    expect(included("read", offConfig)).toBe(true);
 
-    it("should return field definitions with correct types", () => {
-      const fields = getCustomFieldDefinitions();
+    const approveOnly = loadSocialConfig({ ...good, UMBSOCIAL_ENABLE_SLICES: " Approve " }).enabledSlices;
+    const approveConfig = applyDefaultOffSlices(baseConfig(), approveOnly);
+    expect(included("approve", approveConfig)).toBe(true);
+    expect(included("resolve", approveConfig)).toBe(false);
+    expect(included("read", approveConfig)).toBe(true);
 
-      const experimental = fields.find(f => f.name === "experimentalFeatures");
-      expect(experimental?.type).toBe("boolean");
-      expect(experimental?.envVar).toBe("MY_EXPERIMENTAL_FEATURES");
-      expect(experimental?.cliFlag).toBe("my-experimental-features");
+    const both = loadSocialConfig({ ...good, UMBSOCIAL_ENABLE_SLICES: "approve,resolve" }).enabledSlices;
+    const bothConfig = applyDefaultOffSlices(baseConfig(), both);
+    expect(included("approve", bothConfig)).toBe(true);
+    expect(included("resolve", bothConfig)).toBe(true);
 
-      const endpoints = fields.find(f => f.name === "customEndpoints");
-      expect(endpoints?.type).toBe("csv");
+    // A user's own UMBRACO_EXCLUDE_SLICES still applies, even to an enabled slice.
+    const userExcluded = applyDefaultOffSlices(baseConfig({ disabledSlices: ["delete", "approve"] }), both);
+    expect(included("delete", userExcluded)).toBe(false);
+    expect(included("approve", userExcluded)).toBe(false);
+    expect(included("resolve", userExcluded)).toBe(true);
+  });
 
-      const apiKey = fields.find(f => f.name === "externalApiKey");
-      expect(apiKey?.type).toBe("string");
+  it("an_unknown_enabled_slice_is_refused", () => {
+    const error = failureOf({ ...good, UMBSOCIAL_ENABLE_SLICES: "approve,publish" });
 
-      const expectedMajor = fields.find(f => f.name === "expectedUmbracoMajor");
-      expect(expectedMajor?.type).toBe("string");
-      expect(expectedMajor?.envVar).toBe("UMBRACO_EXPECTED_MAJOR");
-      expect(expectedMajor?.cliFlag).toBe("umbraco-expected-major");
-    });
+    expect(error.message).toContain("UMBSOCIAL_ENABLE_SLICES");
+    expect(error.message).toContain("publish");
+  });
 
-    it("should return a copy to prevent mutation", () => {
-      const fields1 = getCustomFieldDefinitions();
-      const fields2 = getCustomFieldDefinitions();
-
-      expect(fields1).not.toBe(fields2);
-      expect(fields1).toEqual(fields2);
-    });
+  it("chaining_is_off_only_when_disabled", () => {
+    expect(loadSocialConfig({ ...good, DISABLE_MCP_CHAINING: "true" }).chaining).toBe(false);
+    expect(loadSocialConfig({ ...good, DISABLE_MCP_CHAINING: "TRUE" }).chaining).toBe(false);
+    expect(loadSocialConfig({ ...good, DISABLE_MCP_CHAINING: "false" }).chaining).toBe(true);
+    expect(loadSocialConfig({ ...good, DISABLE_MCP_CHAINING: "1" }).chaining).toBe(true);
+    expect(loadSocialConfig(good).chaining).toBe(true);
   });
 });
