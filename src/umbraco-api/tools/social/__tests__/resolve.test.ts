@@ -43,13 +43,23 @@ describe("the resolve tools", () => {
     expect(markPostTargetPublished.slices).toEqual(["resolve"]);
   });
 
-  it("descriptions_name_the_verb_and_warn_about_live_networks_and_the_shared_limit", () => {
+  it("descriptions_name_the_verb_and_warn_about_live_networks", () => {
     for (const tool of [retryPostTarget, markPostTargetPublished]) {
       expect(tool.description).toContain("Social Resolve permission");
       expect(tool.description).toMatch(/live network/i);
-      expect(tool.description).toMatch(/same API user/);
-      expect(tool.description).toMatch(/rate limit/i);
     }
+  });
+
+  it("only_retry_warns_about_the_shared_rate_limit", () => {
+    // The site rate-limits retry per user; mark-published isn't limited.
+    expect(retryPostTarget.description).toMatch(/same API user/);
+    expect(retryPostTarget.description).toMatch(/rate limit/i);
+    expect(markPostTargetPublished.description).not.toMatch(/rate limit/i);
+  });
+
+  it("mark_published_is_explicitly_not_destructive", () => {
+    // It sends nothing to a network: it records what a person saw there.
+    expect(markPostTargetPublished.annotations).toHaveProperty("destructiveHint", false);
   });
 
   it("retry_posts_to_the_target_and_returns_the_key_and_version", async () => {

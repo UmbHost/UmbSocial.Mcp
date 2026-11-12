@@ -23,10 +23,10 @@ const markPostTargetPublishedTool: ToolDefinition<typeof inputSchema, typeof out
   name: "mark-post-target-published",
   description:
     "Records that a Failed or Unknown channel of a post is in fact live on its network, because a person has seen it there. It sends nothing itself, but the site treats the channel as published and tells its webhooks and handlers. " +
-    "Only a person who has checked the live network should ask for this. Everyone using the same API user shares the publish rate limit. " +
+    "Only a person who has checked the live network should ask for this. " +
     "Needs the Social Resolve permission, and the resolve slice, which is off unless UMBSOCIAL_ENABLE_SLICES names it.",
   slices: ["resolve"],
-  annotations: { openWorldHint: true },
+  annotations: { destructiveHint: false, openWorldHint: true },
   inputSchema,
   outputSchema,
   enabled: enabledFor(["Resolve"]),
