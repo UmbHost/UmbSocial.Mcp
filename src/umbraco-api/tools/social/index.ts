@@ -22,6 +22,8 @@ import createPost from "./post/create-post.js";
 import createCampaign from "./post/create-campaign.js";
 import updatePost from "./put/update-post.js";
 import deletePost from "./delete/delete-post.js";
+import retryPostTarget from "./post/retry-post-target.js";
+import markPostTargetPublished from "./post/mark-post-target-published.js";
 
 /** Every Social tool but `get-social-edition`, which is always registered. */
 const tools: ToolDefinition<any, any>[] = [
@@ -42,6 +44,8 @@ const tools: ToolDefinition<any, any>[] = [
   deletePost,
   createCampaign,
   previewLink,
+  retryPostTarget,
+  markPostTargetPublished,
 ];
 
 export const socialCollection: ToolCollectionExport<CurrentUser | undefined> = {

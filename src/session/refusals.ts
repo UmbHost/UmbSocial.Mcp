@@ -81,6 +81,16 @@ export const REFUSAL_HINTS: Readonly<Record<string, string>> = {
   "link.https_required": "Links must start with https://.",
   "link.unreachable": "The site couldn't read that page. Check the address, or write the link card yourself.",
   "link.not_allowed": "The site won't fetch that address.",
+  "target.not_found": "No channel target with that id. Take it from the targets of get-post.",
+  "target.not_retryable": "Only a Failed or Unknown channel can be sent again.",
+  "target.not_resolvable": "Only a Failed or Unknown channel can be marked as published.",
+  "target.run_active":
+    "The channel's run may only be slow, and could still post. Leave it for a person to check in Automate, so the post isn't sent twice.",
+  "target.cancelled": "The site refused this step; its reason follows the code.",
+  "thread.partly_posted":
+    "Part of this thread is already live. A person posts the rest on the network, then marks the channel as published.",
+  "channel.unknown": "That channel has been removed, so nothing can be sent to it.",
+  "post.sealed": "This post is sealed and can't be changed.",
   "campaign.unknown": "That campaign doesn't exist any more. Use list-campaigns.",
 };
 
