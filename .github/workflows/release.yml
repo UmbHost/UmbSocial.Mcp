@@ -43,7 +43,7 @@ jobs:
         with:
           node-version: 24.14.1
           registry-url: https://registry.npmjs.org
-          cache: npm
+          # No dependency cache: nothing restored from a cache goes into the job that holds the OIDC token.
 
       - run: npm ci
       - run: npm run compile
@@ -61,15 +61,16 @@ jobs:
             exit 1
           fi
 
-      - name: The package holds only dist, the README, the licence and package.json
+      - name: The package holds only dist, the README, the licence, package.json and the shrinkwrap
         run: |
           npm pack --dry-run --json > pack.json
           node -e '
             const files = require("./pack.json")[0].files.map((f) => f.path);
-            const allowed = (p) => p.startsWith("dist/") || ["README.md", "LICENSE", "package.json"].includes(p);
+            const allowed = (p) => p.startsWith("dist/") || ["README.md", "LICENSE", "package.json", "npm-shrinkwrap.json"].includes(p);
             const extra = files.filter((p) => !allowed(p));
             console.log(files.join("\n"));
             if (extra.length) { console.error("Not allowed in the package: " + extra.join(", ")); process.exit(1); }
+            if (!files.includes("npm-shrinkwrap.json")) { console.error("npm-shrinkwrap.json is missing from the package."); process.exit(1); }
           '
           rm pack.json
 
