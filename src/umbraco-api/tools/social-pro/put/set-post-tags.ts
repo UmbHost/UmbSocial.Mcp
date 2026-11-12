@@ -4,7 +4,9 @@
 
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
+import type { PostResponse } from "../../../api/generated/umbSocialApi.js";
 import { callSocial } from "../../../../session/refusals.js";
+import { assertEditable } from "../../social/post-request.js";
 import { enabledFor, NEEDS_WRITE } from "../../social/shared.js";
 import { NEEDS_PRO } from "../shared.js";
 
@@ -29,6 +31,7 @@ const setPostTagsTool: ToolDefinition<typeof inputSchema, typeof outputSchema> =
   description: [
     "Replaces a Social post's tags with the ones given: any tag not in the list is taken off.",
     "To add or remove one tag, read the post's tags first with get-post-tags and send the full set.",
+    "Only a draft or a post awaiting approval can be changed; any other post is refused with post.not_draft.",
     "Without the Social Schedule permission, it changes only this user's own drafts.",
     NEEDS_WRITE,
     NEEDS_PRO,
@@ -39,6 +42,10 @@ const setPostTagsTool: ToolDefinition<typeof inputSchema, typeof outputSchema> =
   outputSchema,
   enabled: enabledFor(["Write"]),
   handler: async ({ key, tagKeys }) => {
+    // A post on the calendar is left as a person left it: turning tagging off changes what goes out.
+    const post = await callSocial<PostResponse>((api, raw) => api.getPost(key, raw));
+    assertEditable(post.data);
+
     await callSocial<void>((api, raw) => api.setPostTags(key, { tagKeys }, raw));
     return createToolResult({ key, tagKeys });
   },

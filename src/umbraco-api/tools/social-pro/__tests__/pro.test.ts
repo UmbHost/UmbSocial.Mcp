@@ -8,6 +8,7 @@ import { AI_WRITTEN_NOTICE } from "../../../../session/notices.js";
 import { callTool, EDITION_PATH, errorBody, UNLICENSED, USER_PATH } from "../../../../session/__tests__/helpers.js";
 import { clearSession, startSession, toolsFor } from "../../../../session/start-session.js";
 import { API, signIn, userWith } from "../../social/__tests__/helpers/session.js";
+import { aPost } from "../../social/__tests__/helpers/post-builder.js";
 import approvePost from "../post/approve-post.js";
 import returnPost from "../post/return-post.js";
 import submitPostForApproval from "../post/submit-post-for-approval.js";
@@ -60,6 +61,9 @@ const utmFields = (locked: string[] = []) => ({
   content: field(locked.includes("content")),
   shortenedHosts: [],
 });
+
+/** The post read back as a draft, so the UTM and tag tools may change it. */
+const draftPost = () => http.get(`${API}/posts/${POST}`, () => HttpResponse.json(aPost({ key: POST, status: "Draft" })));
 
 const ALL_VERBS = ["View", "Write", "Schedule", "Approve", "UseAi", "Resolve", "ManageSettings"];
 
@@ -268,6 +272,7 @@ describe("the Pro tools", () => {
   it("set_post_utm_keeps_unspecified_fields", async () => {
     let saved: Record<string, unknown> | undefined;
     server.use(
+      draftPost(),
       http.get(`${PRO}/posts/${POST}/utm`, () =>
         HttpResponse.json({ source: "mastodon", medium: "social", content: "launch", disabled: false }),
       ),
@@ -288,6 +293,7 @@ describe("the Pro tools", () => {
   it("a_field_locked_after_it_was_stored_does_not_stop_saving_another", async () => {
     let saved: Record<string, unknown> | undefined;
     server.use(
+      draftPost(),
       http.get(`${PRO}/posts/${POST}/utm`, () =>
         HttpResponse.json({ source: "mastodon", medium: "social", content: "launch", disabled: false }),
       ),
@@ -367,6 +373,7 @@ describe("the Pro tools", () => {
   it("set_post_tags_replaces_the_tags", async () => {
     let body: unknown;
     server.use(
+      draftPost(),
       http.put(`${PRO}/posts/${POST}/tags`, async ({ request }) => {
         body = await request.json();
         return new HttpResponse(null, { status: 200 });
@@ -381,6 +388,31 @@ describe("the Pro tools", () => {
 
     const eleven = Array.from({ length: 11 }, () => TAG);
     expect(setPostTags.inputSchema!.tagKeys.safeParse(eleven).success).toBe(false);
+  });
+
+  it("set_post_utm_and_set_post_tags_refuse_a_scheduled_post_without_writing", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    let writes = 0;
+    server.use(
+      http.get(`${API}/posts/${POST}`, () => HttpResponse.json(aPost({ key: POST, status: "Scheduled" }))),
+      http.get(`${PRO}/posts/${POST}/utm`, () => HttpResponse.json({ source: null, medium: null, content: null, disabled: false })),
+      http.get(`${PRO}/utm/fields`, () => HttpResponse.json(utmFields())),
+      http.put(`${PRO}/posts/${POST}/utm`, () => {
+        writes++;
+        return HttpResponse.json({});
+      }),
+      http.put(`${PRO}/posts/${POST}/tags`, () => {
+        writes++;
+        return new HttpResponse(null, { status: 200 });
+      }),
+    );
+
+    const utm = errorBody(await callTool(setPostUtm, { key: POST, source: "assistant" })) as { codes: string[] };
+    const tags = errorBody(await callTool(setPostTags, { key: POST, tagKeys: [TAG] })) as { codes: string[] };
+
+    expect(utm.codes).toEqual(["post.not_draft"]);
+    expect(tags.codes).toEqual(["post.not_draft"]);
+    expect(writes).toBe(0);
   });
 
   it("set_post_tags_says_to_read_the_tags_first", () => {
