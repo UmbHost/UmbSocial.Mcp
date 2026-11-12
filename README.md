@@ -64,7 +64,9 @@ Posts refer to Umbraco media and pages by key, so this server starts Umbraco's o
 
 - **read-only** (`UMBRACO_READONLY=true`), limited to eight tools that browse and search media and documents;
 - as the same API user, so it sees only that user's start nodes;
-- pinned to an exact version (`@umbraco-cms/mcp-dev@17.6.12`), but **resolved by `npx` when the server starts**. Its own dependencies are resolved then too, outside this package's lock file.
+- from a **pinned, shrinkwrapped** copy: `@umbraco-cms/mcp-dev` is an exact dependency of this package (17.6.12), and the published `npm-shrinkwrap.json` fixes every package beneath it, so you install the versions this release was tested with. It is started with Node from where it was installed; nothing is downloaded when the server starts.
+
+This server registers only those eight tools, whatever the chained server lists, and logs the name of any other tool it drops.
 
 `DISABLE_MCP_CHAINING=true` turns it off. The Social tools still work; the assistant then needs media and page keys from you.
 
@@ -94,7 +96,8 @@ The generated API client is built from a committed Swagger snapshot. See [CLAUDE
 
 ### Before bumping a dependency
 
-- **`@umbraco-cms/mcp-dev`** (`CMS_MCP_PACKAGE` in `src/config/mcp-servers.ts`): check the environment variables the new version reads against the filter variables blanked for it (`INHERITED_FILTERS_BLANKED`), so none of this server's own filters reaches it. Check that the eight tools in `CMS_TOOLS` still exist under those names, then rerun the live checks.
+- **Every dependency** is pinned exactly, and `npm-shrinkwrap.json` (published with the package) replaces `package-lock.json`. Resolve with `npm install --before=<a date at least two weeks ago>`, so nothing newer than two weeks is locked.
+- **`@umbraco-cms/mcp-dev`** (`CMS_MCP_VERSION` in `src/config/mcp-servers.ts`, which must match `package.json`): check the environment variables the new version reads against the filter variables blanked for it (`INHERITED_FILTERS_BLANKED`), so none of this server's own filters reaches it. Check that the eight tools in `CMS_TOOLS` still exist under those names, then rerun the live checks.
 - **`@umbraco-cms/mcp-server-sdk`**: `INTROSPECTION_FLAGS` in `src/index.ts` is a copy of the SDK's offline flags (`--list-tools` and the rest), which skip the configuration check. Compare it with the new version's.
 
 ### Releasing

@@ -32,7 +32,7 @@ import { collections } from "./collections.js";
 import { createServer } from "./server.js";
 import { getSocialApi } from "./umbraco-api/api/client.js";
 import { mcpClientManager } from "./umbraco-api/mcp-client.js";
-import { mcpServers, proxiedToolConfig } from "./config/mcp-servers.js";
+import { allowlisted, mcpServers, proxiedToolConfig } from "./config/mcp-servers.js";
 import { startSession, toolsFor } from "./session/start-session.js";
 import type { CurrentUser } from "./session/social-user.js";
 import {
@@ -213,7 +213,10 @@ async function registerChainedTools(): Promise<number> {
   if (chained.length === 0) return 0;
 
   try {
-    const proxiedTools = await discoverProxiedTools(mcpClientManager);
+    const { allowed: proxiedTools, dropped } = allowlisted(await discoverProxiedTools(mcpClientManager));
+    if (dropped.length > 0) {
+      console.error(`${SERVER_NAME}: dropped chained CMS tool(s) not on the allowlist: ${dropped.join(", ")}`);
+    }
     for (const pt of proxiedTools) {
       server.registerTool(
         pt.prefixedName,
