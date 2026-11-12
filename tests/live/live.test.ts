@@ -163,7 +163,7 @@ describeLive("live checks", () => {
   afterAll(async () => {
     // Anything a check left behind, as far as the tools may delete it.
     for (const { server, key } of made) {
-      await server().call("delete-post", { key }).catch(() => undefined);
+      await server().call("delete-post", { key, confirm: true }).catch(() => undefined);
     }
     await Promise.all([vw?.close(), all?.close(), core?.close()]);
   });
@@ -207,8 +207,9 @@ describeLive("live checks", () => {
     const check = await vw.ok("check-post", { key, text, channelKeys: [channelKey] });
     expect(check.errors).toEqual([]);
 
-    // The test client can't be asked to confirm, so the tool goes ahead.
-    expect(await vw.ok("delete-post", { key })).toMatchObject({ key, deleted: true });
+    // The test client can't be asked to confirm, so the tool refuses until the caller passes confirm: true.
+    expect(await vw.refused("delete-post", { key })).toContain("confirmation.required");
+    expect(await vw.ok("delete-post", { key, confirm: true })).toMatchObject({ key, deleted: true });
     expect(await vw.refused("get-post", { key })).toContain("post.not_found");
   });
 
