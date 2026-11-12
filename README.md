@@ -61,7 +61,7 @@ Trust the certificate; never turn TLS checks off (`NODE_TLS_REJECT_UNAUTHORIZED=
 
 ## The chained CMS server
 
-Posts refer to Umbraco media and pages by key, so this server starts Umbraco's own [CMS Developer MCP](https://www.npmjs.com/package/@umbraco-cms/mcp-dev) alongside it, to find those keys. Its tools appear with a `cms--` prefix. It runs:
+Posts refer to Umbraco media and pages by key, so by default this server starts Umbraco's own [CMS Developer MCP](https://www.npmjs.com/package/@umbraco-cms/mcp-dev) alongside it, to find those keys. Its tools appear with a `cms--` prefix. It runs:
 
 - **read-only** (`UMBRACO_READONLY=true`), limited to eight tools that browse and search media and documents;
 - as the same API user, so it sees only that user's start nodes;
@@ -74,7 +74,8 @@ This server registers only those eight tools, whatever the chained server lists,
 ## Safety
 
 - **The site enforces the AI rule.** Every post an API user creates or changes is marked as written with AI, and an API user never counts as a reviewer. A person must review an AI-written post in the backoffice before it can be scheduled. No tool can get round this, and no tool result suggests trying.
-- **Drafts only.** The writing tools save drafts. `update-post` and `delete-post` change only drafts and posts awaiting approval: a post on the calendar, or one already sent, is left as a person left it.
+- **Drafts only.** The writing tools save drafts. `update-post`, `delete-post`, `set-post-utm` and `set-post-tags` change only drafts and posts awaiting approval: a post on the calendar, or one already sent, is left as a person left it.
+- **Confirmations.** `delete-post`, `approve-post`, `retry-post-target` and `mark-post-target-published` are marked destructive, and ask the person first when the client can ask. When it can't, they go ahead only if the assistant passes `confirm: true`, which it should do only after the person has said yes; otherwise they're refused with `confirmation.required`.
 - **Off by default.** The `approve` and `resolve` tools act on review and on live networks, so they're registered only when `UMBSOCIAL_ENABLE_SLICES` names them (naming one in `UMBRACO_INCLUDE_TOOLS` isn't enough), and only for a user with the matching permission.
 - **The API user's permissions decide.** A tool is listed only when the API user's group has a permission that can use it, and Pro's tools only when the site is licensed. The site checks every call again.
 - **Secrets.** The client secret and access tokens never appear in tool results, errors or logs. Keep the file `UMBSOCIAL_ENV_FILE` names out of source control and out of the project folder.

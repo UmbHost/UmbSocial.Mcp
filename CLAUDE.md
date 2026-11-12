@@ -28,7 +28,9 @@ The site enforces it; this server must never work around it or suggest otherwise
 - Secrets (`UMBRACO_CLIENT_SECRET`, tokens) never appear in tool results, errors or logs.
 - Unit tests run against MSW mocks only; a request without a handler fails the test. CI never calls a real site or a model.
 - Never run the template's `init` or `discover` subcommands against a site you don't own, and never turn TLS checks off (`NODE_TLS_REJECT_UNAUTHORIZED=0`); trust a dev certificate with `NODE_EXTRA_CA_CERTS` or `--use-system-ca`.
-- Pin dependencies to exact versions at least two weeks old, and commit the lock file.
+- Pin dependencies to exact versions at least two weeks old, and commit the lock file. The lock file is `npm-shrinkwrap.json` (published, so users get the same versions); resolve with `npm install --before=<at least 14 days ago>`.
+- The chained `@umbraco-cms/mcp-dev` is a dependency, started with `process.execPath` from its installed path, never `npx`. Only `CMS_TOOLS` is registered from it.
+- A `.env` is read only from `UMBSOCIAL_ENV_FILE`, never from the working directory.
 
 ## Commits, publishing and pushing
 
