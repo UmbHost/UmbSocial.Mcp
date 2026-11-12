@@ -3,7 +3,7 @@
  * permission each needs, and asking the person before a destructive step.
  */
 
-import { confirmAction, getSupportedElicitationKind } from "@umbraco-cms/mcp-server-sdk";
+import { confirmAction, getSupportedElicitationKind, rejectControlCharacters, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import { can, toSocialUser, type CurrentUser, type SocialVerb } from "../../../session/social-user.js";
 
 /** A tool's `enabled`: the user has the Social section and any one of these verbs. */
@@ -33,4 +33,34 @@ export async function confirmIfSupported(extra: { requestId?: string | number } 
   }
   if (kind !== "form" && kind !== "base") return true;
   return confirmAction(extra, message, { title: "Confirm", defaultValue: false });
+}
+
+/** Every string in a tool's arguments, with its path. */
+function* strings(value: unknown, path: string): Generator<[string, string]> {
+  if (typeof value === "string") yield [value, path];
+  else if (Array.isArray(value)) for (const [i, item] of value.entries()) yield* strings(item, `${path}[${i}]`);
+  else if (value && typeof value === "object") {
+    for (const [key, item] of Object.entries(value)) yield* strings(item, path ? `${path}.${key}` : key);
+  }
+}
+
+/**
+ * Refuses control characters (all but tab, newline and carriage return) in
+ * any string argument, with the SDK's own check and error.
+ *
+ * Hand-rolled because the SDK lacks it: a field marked `[raw]` skips every
+ * check of `withInputSanitization`, the control-character one included, and
+ * post text must be `[raw]` to keep its `&`, `?` and `%20`. Strings the SDK
+ * checks already pass this too. Wrap inside `withStandardDecorators`, so its
+ * error handling reports the refusal.
+ */
+export function withRawTextChecks<T extends ToolDefinition<any, any>>(tool: T): T {
+  const handler = tool.handler as (args: unknown, extra: unknown) => unknown;
+  return {
+    ...tool,
+    handler: ((args: unknown, extra: unknown) => {
+      for (const [value, path] of strings(args, "")) rejectControlCharacters(value, path);
+      return handler(args, extra);
+    }) as T["handler"],
+  };
 }

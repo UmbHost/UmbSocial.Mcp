@@ -51,6 +51,9 @@ const createShape = {
   linkUrl: https().optional().describe(raw("The link the post shares (https). preview-link reads its card.")),
   linkTitle: z.string().optional().describe(raw("The link card's title.")),
   linkDescription: z.string().optional().describe(raw("The link card's description.")),
+  linkImageUrl: https()
+    .optional()
+    .describe(raw("The link card's image (https): take it from preview-link's imageUrl for the same link.")),
   mediaKey: z.guid().optional().describe("The image, a media key from the cms media tools."),
   imageAltText: z.string().optional().describe(raw("The image's alt text.")),
   campaignKey: z.guid().optional().describe("The campaign, from list-campaigns or create-campaign."),
@@ -80,7 +83,11 @@ export const postUpdateShape = {
   linkUrl: https().nullable().optional().describe(raw("The link (https); null removes it. A new link clears the old card's title, description and image.")),
   linkTitle: z.string().nullable().optional().describe(raw("The link card's title; null removes it.")),
   linkDescription: z.string().nullable().optional().describe(raw("The link card's description; null removes it.")),
-  mediaKey: z.guid().nullable().optional().describe("The image, a media key from the cms media tools; null removes it. A new image clears the old alt text."),
+  linkImageUrl: https()
+    .nullable()
+    .optional()
+    .describe(raw("The link card's image (https), from preview-link's imageUrl for the same link; null removes it.")),
+  mediaKey: z.guid().nullable().optional().describe("The image, a media key from the cms media tools; null removes it. A new image clears the old alt text and crops."),
   imageAltText: z.string().nullable().optional().describe(raw("The image's alt text; null removes it.")),
   campaignKey: z.guid().nullable().optional().describe("The campaign, from list-campaigns or create-campaign; null removes it."),
   pageKey: z
@@ -101,6 +108,7 @@ export interface PostInputArgs {
   linkUrl?: string | null;
   linkTitle?: string | null;
   linkDescription?: string | null;
+  linkImageUrl?: string | null;
   mediaKey?: string | null;
   imageAltText?: string | null;
   campaignKey?: string | null;

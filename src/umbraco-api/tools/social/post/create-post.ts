@@ -9,7 +9,7 @@ import { callSocial } from "../../../../session/refusals.js";
 import { AI_WRITTEN_NOTICE } from "../../../../session/notices.js";
 import { postCreateShape } from "../post-input.js";
 import { applyChanges, newPostRequest } from "../post-request.js";
-import { enabledFor } from "../shared.js";
+import { enabledFor, withRawTextChecks } from "../shared.js";
 
 const inputSchema = postCreateShape;
 
@@ -41,4 +41,4 @@ const createPostTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = 
   },
 };
 
-export default withStandardDecorators(createPostTool);
+export default withStandardDecorators(withRawTextChecks(createPostTool));

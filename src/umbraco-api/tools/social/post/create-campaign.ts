@@ -7,7 +7,7 @@ import { createToolResult, RAW_FIELD_MARKER, withStandardDecorators, type ToolDe
 import type { CampaignResponse } from "../../../api/generated/umbSocialApi.js";
 import { callSocial } from "../../../../session/refusals.js";
 import { withUtcTimes } from "../../../../session/time.js";
-import { enabledFor, NEEDS_WRITE } from "../shared.js";
+import { NEEDS_WRITE, enabledFor, withRawTextChecks } from "../shared.js";
 
 const inputSchema = {
   name: z.string().min(1).describe(`The campaign's name. ${RAW_FIELD_MARKER}`),
@@ -36,4 +36,4 @@ const createCampaignTool: ToolDefinition<typeof inputSchema, typeof outputSchema
   },
 };
 
-export default withStandardDecorators(createCampaignTool);
+export default withStandardDecorators(withRawTextChecks(createCampaignTool));

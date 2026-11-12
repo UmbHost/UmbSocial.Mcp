@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
 import { http, HttpResponse } from "msw";
-import { clearServerRef, setServerRef } from "@umbraco-cms/mcp-server-sdk";
+import { clearServerRef, setServerRef, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import { server } from "../../../../mocks/server.js";
 import { callTool, errorBody } from "../../../../session/__tests__/helpers.js";
 import { REFUSAL_HINTS } from "../../../../session/refusals.js";
@@ -224,8 +224,6 @@ describe("writing posts", () => {
     expect(puts[0]).toMatchObject({ linkUrl: "https://example.com/b", linkTitle: null, linkDescription: null, linkImageUrl: null });
     expect(puts[1]).toMatchObject({ linkUrl: "https://example.com/b", linkTitle: "Page B", linkDescription: null, linkImageUrl: null });
     expect(puts[2]).toMatchObject({ linkTitle: "Page A", linkDescription: "About page A", linkImageUrl: "https://example.com/a.jpg" });
-    expect(updatePost.inputSchema).not.toHaveProperty("linkImageUrl");
-    expect(createPost.inputSchema).not.toHaveProperty("linkImageUrl");
   });
 
   it("a_new_image_clears_the_old_alt_text", async () => {
@@ -436,5 +434,80 @@ describe("writing posts", () => {
       linkUrl: "https://example.com/menu?day=fri&time=19%3A00",
       linkTitle: "Fish & chips",
     });
+  });
+
+  it("a_new_image_clears_the_old_crops", async () => {
+    const post = aFullDraft();
+    const puts = servePost(post);
+
+    await callTool(updatePost, { key: post.key, version: post.version, mediaKey: OTHER_MEDIA, imageAltText: "A blue kite" });
+    // The same image keeps its crops.
+    await callTool(updatePost, { key: post.key, version: post.version, mediaKey: MEDIA });
+
+    expect(puts[0]).toMatchObject({ mediaKey: OTHER_MEDIA, imageFraming: null });
+    expect(puts[1]).toMatchObject({ mediaKey: MEDIA, imageFraming: post.imageFraming });
+  });
+
+  it("a_link_card_image_is_taken_as_given", async () => {
+    let created: Record<string, unknown> | undefined;
+    server.use(
+      http.post(`${API}/posts`, async ({ request }) => {
+        created = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json(SAVED);
+      }),
+    );
+    await callTool(createPost, {
+      text: "Hello",
+      channelKeys: [CHANNEL_A],
+      linkUrl: "https://example.com/b",
+      linkImageUrl: "https://example.com/b.jpg",
+    });
+    expect(created).toMatchObject({ linkUrl: "https://example.com/b", linkImageUrl: "https://example.com/b.jpg" });
+
+    const post = aFullDraft();
+    const puts = servePost(post);
+    await callTool(updatePost, {
+      key: post.key,
+      version: post.version,
+      linkUrl: "https://example.com/b",
+      linkImageUrl: "https://example.com/b.jpg",
+    });
+    await callTool(updatePost, { key: post.key, version: post.version, linkImageUrl: null });
+
+    expect(puts[0]).toMatchObject({ linkUrl: "https://example.com/b", linkTitle: null, linkImageUrl: "https://example.com/b.jpg" });
+    expect(puts[1]).toMatchObject({ linkUrl: "https://example.com/a", linkImageUrl: null });
+    expect(createPost.inputSchema!.linkImageUrl.safeParse("http://example.com/b.jpg").success).toBe(false);
+    expect(createPost.inputSchema!.linkImageUrl.description).toMatch(/preview-link/);
+  });
+
+  it("raw_fields_refuse_control_characters", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    // No POST handlers: a request would fail the test.
+    const bell = "Hello\u0007";
+    const cases: Array<[ToolDefinition<any, any>, Record<string, unknown>]> = [
+      [createPost, { text: bell, channelKeys: [CHANNEL_A] }],
+      [createPost, { text: "Hi", channelKeys: [CHANNEL_A], channelTexts: { [CHANNEL_A]: bell } }],
+      [createPost, { text: "Hi", channelKeys: [CHANNEL_A], options: { [CHANNEL_A]: { threadParts: ["ok", bell] } } }],
+      [createPost, { text: "Hi", channelKeys: [CHANNEL_A], imageAltText: "\u001b[31mred" }],
+      [checkPost, { text: bell, channelKeys: [CHANNEL_A] }],
+      [createCampaign, { name: bell }],
+    ];
+    for (const [tool, args] of cases) {
+      const result = await callTool(tool, args);
+      expect(result.isError).toBe(true);
+      expect(JSON.stringify(result.content)).toMatch(/control characters/);
+    }
+
+    // Newlines and tabs are text.
+    let body: Record<string, unknown> | undefined;
+    server.use(
+      http.post(`${API}/posts`, async ({ request }) => {
+        body = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json(SAVED);
+      }),
+    );
+    const result = await callTool(createPost, { text: "Line one\r\nLine two\n\tindented", channelKeys: [CHANNEL_A] });
+    expect(result.isError).toBeFalsy();
+    expect(body).toMatchObject({ text: "Line one\r\nLine two\n\tindented" });
   });
 });

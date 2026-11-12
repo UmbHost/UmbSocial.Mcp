@@ -8,7 +8,7 @@ import type { CheckResponse } from "../../../api/generated/umbSocialApi.js";
 import { callSocial } from "../../../../session/refusals.js";
 import { postCreateShape } from "../post-input.js";
 import { applyChanges, newPostRequest } from "../post-request.js";
-import { enabledFor, NEEDS_WRITE } from "../shared.js";
+import { NEEDS_WRITE, enabledFor, withRawTextChecks } from "../shared.js";
 
 const inputSchema = {
   key: z.guid().optional().describe("A saved post's key, from list-posts, so its links are checked as they will go out for it."),
@@ -49,4 +49,4 @@ const checkPostTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = {
   },
 };
 
-export default withStandardDecorators(checkPostTool);
+export default withStandardDecorators(withRawTextChecks(checkPostTool));

@@ -9,7 +9,7 @@ import { callSocial } from "../../../../session/refusals.js";
 import { AI_WRITTEN_NOTICE } from "../../../../session/notices.js";
 import { postUpdateShape } from "../post-input.js";
 import { applyChanges, assertEditable, assertVersion, toPostRequest } from "../post-request.js";
-import { enabledFor } from "../shared.js";
+import { enabledFor, withRawTextChecks } from "../shared.js";
 
 const inputSchema = {
   key: z.guid().describe("The post's key, from list-posts."),
@@ -55,4 +55,4 @@ const updatePostTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = 
   },
 };
 
-export default withStandardDecorators(updatePostTool);
+export default withStandardDecorators(withRawTextChecks(updatePostTool));
