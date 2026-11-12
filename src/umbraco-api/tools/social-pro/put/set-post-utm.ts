@@ -1,6 +1,8 @@
 /**
  * set-post-utm: changes a post's own UTM values, keeping every field it isn't
- * given. `PUT posts/{key}/utm` replaces all four, so it reads them first.
+ * given. `PUT posts/{key}/utm` replaces all four, so it reads them first, and,
+ * as the backoffice's `postUtmBody` does, sends a centrally locked field as
+ * null so a value stored before the lock doesn't refuse the save.
  */
 
 import { z } from "zod";
@@ -9,7 +11,7 @@ import type { PostUtmModel } from "../../../api/generated/umbSocialApi.js";
 import { callSocial } from "../../../../session/refusals.js";
 import { enabledFor, NEEDS_WRITE } from "../../social/shared.js";
 import { NEEDS_PRO } from "../shared.js";
-import { toUtm, utmOutputSchema } from "../get/get-post-utm.js";
+import { lockedUtmFields, toUtm, utmOutputSchema, type UtmField } from "../get/get-post-utm.js";
 
 /** The site's limit (`PostUtm.MaxLength`). */
 const MAX_VALUE = 100;
@@ -32,7 +34,8 @@ const inputSchema = {
 const setPostUtmTool: ToolDefinition<typeof inputSchema, typeof utmOutputSchema> = {
   name: "set-post-utm",
   description: [
-    "Changes a Social post's own UTM values: it reads them, keeps every field it isn't given, and saves them. A field the site sets centrally can't be changed (utm.field_locked).",
+    "Changes a Social post's own UTM values: it reads them, keeps every field it isn't given, and saves them.",
+    "A field the site sets centrally (see `locked` in get-post-utm) can't be set on a post: giving it a value is refused with utm.field_locked.",
     "Without the Social Schedule permission, it changes only this user's own drafts.",
     NEEDS_WRITE,
     NEEDS_PRO,
@@ -44,15 +47,18 @@ const setPostUtmTool: ToolDefinition<typeof inputSchema, typeof utmOutputSchema>
   enabled: enabledFor(["Write"]),
   handler: async ({ key, ...changes }) => {
     const read = await callSocial<PostUtmModel>((api, raw) => api.getPostUtm(key, raw));
-    const current = toUtm(read.data);
+    const locked = await lockedUtmFields();
+    // A value given for a locked field is still sent, so the site refuses it by name.
+    const merged = (field: UtmField) =>
+      changes[field] !== undefined ? changes[field] : locked.includes(field) ? null : (read.data[field] ?? null);
     const request: PostUtmModel = {
-      source: changes.source === undefined ? current.source : changes.source,
-      medium: changes.medium === undefined ? current.medium : changes.medium,
-      content: changes.content === undefined ? current.content : changes.content,
-      disabled: changes.disabled ?? current.disabled,
+      source: merged("source"),
+      medium: merged("medium"),
+      content: merged("content"),
+      disabled: changes.disabled ?? read.data.disabled,
     };
     const response = await callSocial<PostUtmModel>((api, raw) => api.savePostUtm(key, request, raw));
-    return createToolResult(toUtm(response.data));
+    return createToolResult(toUtm(response.data, locked));
   },
 };
 

@@ -4,9 +4,9 @@
  */
 
 import { z } from "zod";
-import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
+import { createToolResult, UmbracoApiError, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { PostKeyResponse } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callSocial, REFUSAL_HINTS } from "../../../../session/refusals.js";
 import { toUtcParam } from "../../../../session/time.js";
 import { PAGE_DELAYS } from "../../social/post-input.js";
 import { confirmIfSupported, enabledFor } from "../../social/shared.js";
@@ -14,6 +14,14 @@ import { NEEDS_PRO } from "../shared.js";
 
 /** The times an approval takes (`ApprovalService.ApproveAsync`): every `When` but Draft. */
 const APPROVE_WHEN = ["Queue", "At", "Now", "OnPagePublish"] as const;
+
+const PAST = "schedule.past";
+const DELAY_NEEDS_PAGE_PUBLISH = "input.delay_needs_page_publish";
+
+/** Refused before the confirmation, so the person isn't asked about an approval the site would refuse. */
+function refuse(code: string): never {
+  throw new UmbracoApiError({ codes: [code], status: 400, hint: REFUSAL_HINTS[code] });
+}
 
 const inputSchema = {
   key: z.guid().describe("The key of the post awaiting approval, from list-posts."),
@@ -45,7 +53,7 @@ const approvePostTool: ToolDefinition<typeof inputSchema, typeof outputSchema> =
     "A person should approve posts in the Umbraco backoffice; this tool is off unless UMBSOCIAL_ENABLE_SLICES names the approve slice.",
     "The site refuses an API user approving a post written with AI, and every post an API user writes counts as that, so this works only for a post a person wrote.",
     "Now publishes the post to its live networks at once, and is rate limited for everyone using the same API user. OnPagePublish needs a post tied to a page.",
-    "The person may be asked to confirm first.",
+    "At needs an atUtc in the future, and pageDelayMinutes goes only with OnPagePublish. The person may be asked to confirm first.",
     "Needs the Social Approve permission.",
     NEEDS_PRO,
   ].join(" "),
@@ -55,6 +63,8 @@ const approvePostTool: ToolDefinition<typeof inputSchema, typeof outputSchema> =
   outputSchema,
   enabled: enabledFor(["Approve"]),
   handler: async ({ key, expectedVersion, when, atUtc, pageDelayMinutes }, extra) => {
+    if (when === "At" && (!atUtc || Date.parse(atUtc) <= Date.now())) refuse(PAST);
+    if (pageDelayMinutes !== undefined && when !== "OnPagePublish") refuse(DELAY_NEEDS_PAGE_PUBLISH);
     const question =
       when === "Now"
         ? `Approve post ${key} and publish it to its live networks now?`

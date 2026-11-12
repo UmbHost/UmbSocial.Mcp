@@ -19,6 +19,8 @@ import getMetricsTrend from "../get/get-metrics-trend.js";
 import listTemplates from "../get/list-templates.js";
 import setPostTags from "../put/set-post-tags.js";
 import setPostUtm from "../put/set-post-utm.js";
+import getPostUtm from "../get/get-post-utm.js";
+import { REFUSAL_HINTS } from "../../../../session/refusals.js";
 
 const PRO = `${API}/pro`;
 const POST = "12121212-1212-4121-8121-121212121212";
@@ -48,6 +50,16 @@ const PRO_TOOL_NAMES = [
   "set-post-utm",
   "submit-post-for-approval",
 ].sort();
+
+const field = (locked: boolean, value = "") => ({ default: value, locked });
+const utmFields = (locked: string[] = []) => ({
+  enabled: true,
+  source: field(locked.includes("source"), "umbraco"),
+  medium: field(locked.includes("medium"), "social"),
+  campaign: field(locked.includes("campaign")),
+  content: field(locked.includes("content")),
+  shortenedHosts: [],
+});
 
 const ALL_VERBS = ["View", "Write", "Schedule", "Approve", "UseAi", "Resolve", "ManageSettings"];
 
@@ -144,6 +156,34 @@ describe("the Pro tools", () => {
     expect(result.structuredContent).toEqual({ key: POST, approved: false, message: expect.any(String) });
   });
 
+  it("approve_post_refuses_at_without_a_future_time_before_asking", async () => {
+    const elicitInput = jest.fn(async () => ({ action: "accept", content: { confirm: true } }));
+    setServerRef({ getClientCapabilities: () => ({ elicitation: { form: {} } }), elicitInput } as never);
+
+    for (const atUtc of [undefined, "2020-01-01T00:00:00Z"]) {
+      const body = errorBody(
+        await callTool(approvePost, { key: POST, expectedVersion: VERSION, when: "At", ...(atUtc ? { atUtc } : {}) }),
+      ) as { codes: string[]; hint: string };
+      expect(body.codes).toEqual(["schedule.past"]);
+      expect(body.hint).toMatch(/get the post again/i);
+    }
+    expect(elicitInput).not.toHaveBeenCalled();
+    expect(REFUSAL_HINTS["schedule.past"]).toMatch(/get the post again/i);
+  });
+
+  it("approve_post_refuses_a_delay_without_on_page_publish", async () => {
+    const body = errorBody(
+      await callTool(approvePost, { key: POST, expectedVersion: VERSION, when: "Queue", pageDelayMinutes: 60 }),
+    ) as { codes: string[] };
+
+    expect(body.codes).toEqual(["input.delay_needs_page_publish"]);
+  });
+
+  it("page_culture_is_at_most_20_characters", () => {
+    expect(createPostFromTemplate.inputSchema!.pageCulture.safeParse("en-GB").success).toBe(true);
+    expect(createPostFromTemplate.inputSchema!.pageCulture.safeParse("x".repeat(21)).success).toBe(false);
+  });
+
   it("approve_post_description_says_off_by_default_and_a_person_approves", () => {
     expect(approvePost.description).toMatch(/off unless UMBSOCIAL_ENABLE_SLICES/);
     expect(approvePost.description).toMatch(/person should approve .* Umbraco backoffice/);
@@ -231,6 +271,7 @@ describe("the Pro tools", () => {
       http.get(`${PRO}/posts/${POST}/utm`, () =>
         HttpResponse.json({ source: "mastodon", medium: "social", content: "launch", disabled: false }),
       ),
+      http.get(`${PRO}/utm/fields`, () => HttpResponse.json(utmFields())),
       http.put(`${PRO}/posts/${POST}/utm`, async ({ request }) => {
         saved = (await request.json()) as Record<string, unknown>;
         return HttpResponse.json(saved);
@@ -241,7 +282,41 @@ describe("the Pro tools", () => {
 
     expect(result.isError).toBeFalsy();
     expect(saved).toEqual({ source: "mastodon", medium: "organic", content: null, disabled: false });
-    expect(result.structuredContent).toEqual(saved);
+    expect(result.structuredContent).toEqual({ ...saved, locked: [] });
+  });
+
+  it("a_field_locked_after_it_was_stored_does_not_stop_saving_another", async () => {
+    let saved: Record<string, unknown> | undefined;
+    server.use(
+      http.get(`${PRO}/posts/${POST}/utm`, () =>
+        HttpResponse.json({ source: "mastodon", medium: "social", content: "launch", disabled: false }),
+      ),
+      http.get(`${PRO}/utm/fields`, () => HttpResponse.json(utmFields(["source", "medium"]))),
+      http.put(`${PRO}/posts/${POST}/utm`, async ({ request }) => {
+        saved = (await request.json()) as Record<string, unknown>;
+        return HttpResponse.json(saved);
+      }),
+    );
+
+    const result = await callTool(setPostUtm, { key: POST, content: "autumn" });
+
+    expect(result.isError).toBeFalsy();
+    expect(saved).toEqual({ source: null, medium: null, content: "autumn", disabled: false });
+    expect(result.structuredContent).toEqual({ ...saved, locked: ["source", "medium"] });
+  });
+
+  it("get_post_utm_marks_the_locked_fields", async () => {
+    server.use(
+      http.get(`${PRO}/posts/${POST}/utm`, () =>
+        HttpResponse.json({ source: "mastodon", medium: null, content: "launch", disabled: false }),
+      ),
+      http.get(`${PRO}/utm/fields`, () => HttpResponse.json(utmFields(["source"]))),
+    );
+
+    const result = await callTool(getPostUtm, { key: POST });
+
+    expect(result.structuredContent).toEqual({ source: null, medium: null, content: "launch", disabled: false, locked: ["source"] });
+    expect(getPostUtm.description).toContain("own drafts");
   });
 
   it("list_short_links_needs_manage_settings", () => {

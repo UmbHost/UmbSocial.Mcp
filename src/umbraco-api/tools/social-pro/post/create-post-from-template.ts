@@ -13,7 +13,7 @@ import { NEEDS_PRO } from "../shared.js";
 const inputSchema = {
   templateKey: z.guid().describe("The template's key, from list-templates."),
   pageKey: z.guid().optional().describe("A page the post is about: its document key, from the cms document tools."),
-  pageCulture: z.string().max(32).optional().describe("With pageKey: the page's language, for a page that varies by language."),
+  pageCulture: z.string().max(20).optional().describe("With pageKey: the page's language, for a page that varies by language."),
 };
 
 const outputSchema = z.object({
