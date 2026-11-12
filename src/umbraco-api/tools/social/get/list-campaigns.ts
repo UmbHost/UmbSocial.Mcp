@@ -3,7 +3,7 @@
  */
 
 import { z } from "zod";
-import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
+import { createToolResult, UmbracoApiError, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { CampaignSuggestionResponse, PagedCampaignResponseModel } from "../../../api/generated/umbSocialApi.js";
 import { callSocial } from "../../../../session/refusals.js";
 import { can, currentSocialUser } from "../../../../session/social-user.js";
@@ -50,13 +50,19 @@ const listCampaignsTool: ToolDefinition<typeof inputSchema, typeof outputSchema>
   pageSize: PAGE_SIZE,
   enabled: enabledFor(["Write", "ManageSettings"]),
   handler: async ({ query, skip, take }) => {
-    // Unknown verbs (null) take the Write list; the site decides either way.
     const user = currentSocialUser();
-    if (user?.verbs && can(user, "ManageSettings")) {
+    const manages = user?.verbs ? can(user, "ManageSettings") : null;
+    if (manages !== false) {
       // A cursor carries its own take, so the schema's maximum doesn't hold here.
       const page = { query, skip: Math.max(skip ?? 0, 0), take: Math.min(Math.max(take ?? PAGE_SIZE, 1), MAX_TAKE) };
-      const response = await callSocial<PagedCampaignResponseModel>((api, raw) => api.listCampaigns(page, raw));
-      return createToolResult({ items: withUtcTimes(response.data.items), total: response.data.total, source: "all" });
+      try {
+        const response = await callSocial<PagedCampaignResponseModel>((api, raw) => api.listCampaigns(page, raw));
+        return createToolResult({ items: withUtcTimes(response.data.items), total: response.data.total, source: "all" });
+      } catch (error) {
+        // Verbs that couldn't be read (null): the full list was worth a try;
+        // its 403 means Write only, so the recent list answers instead.
+        if (manages !== null || !(error instanceof UmbracoApiError) || error.problemDetails.status !== 403) throw error;
+      }
     }
 
     const response = await callSocial<CampaignSuggestionResponse[]>((api, raw) => api.suggestCampaigns({ query }, raw));

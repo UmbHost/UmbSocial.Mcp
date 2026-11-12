@@ -1,9 +1,11 @@
 import { afterEach, describe, expect, it, jest } from "@jest/globals";
+import { encodeCursor } from "@umbraco-cms/mcp-server-sdk";
 import { http, HttpResponse } from "msw";
 import { server } from "../../../../mocks/server.js";
 import { callTool, errorBody } from "../../../../session/__tests__/helpers.js";
 import { REFUSAL_HINTS } from "../../../../session/refusals.js";
 import getPost from "../get/get-post.js";
+import getPostHistory from "../get/get-post-history.js";
 import getPostMetrics from "../get/get-post-metrics.js";
 import getPageShare from "../get/get-page-share.js";
 import { API } from "./helpers/session.js";
@@ -103,5 +105,21 @@ describe("post reads", () => {
       status: 403,
       hint: REFUSAL_HINTS["page.no_access"],
     });
+  });
+
+  it("get_post_history_clamps_take_to_100", async () => {
+    let query: URLSearchParams | undefined;
+    server.use(
+      http.get(`${API}/posts/:key/history`, ({ request }) => {
+        query = new URL(request.url).searchParams;
+        return HttpResponse.json({ total: 0, items: [] });
+      }),
+    );
+
+    // A cursor carries its own take, past the schema's maximum.
+    await callTool(getPostHistory, { key: aPost().key, cursor: encodeCursor({ s: 40, t: 500 }) });
+
+    expect(query?.get("skip")).toBe("40");
+    expect(query?.get("take")).toBe("100");
   });
 });

@@ -4,6 +4,8 @@ import { server } from "../../../../mocks/server.js";
 import { callTool } from "../../../../session/__tests__/helpers.js";
 import { clearSession } from "../../../../session/start-session.js";
 import listCampaigns from "../get/list-campaigns.js";
+import { EDITION_PATH, LICENSED, USER_PATH } from "../../../../session/__tests__/helpers.js";
+import { startSession } from "../../../../session/start-session.js";
 import { API, signIn } from "./helpers/session.js";
 
 const campaign = {
@@ -57,5 +59,40 @@ describe("list-campaigns", () => {
       total: 1,
       items: [{ key: campaign.key, name: campaign.name, value: campaign.value }],
     });
+  });
+
+  it("list_campaigns_with_unknown_verbs_tries_the_full_list_then_falls_back", async () => {
+    let allStatus = 403;
+    let paged = 0;
+    let suggested = 0;
+    server.use(
+      // Verbs that can't be read: the site decides.
+      http.get(USER_PATH, () => HttpResponse.json({ allowedSections: ["UmbSocial.Section"], fallbackPermissions: null })),
+      http.get(EDITION_PATH, () => HttpResponse.json(LICENSED)),
+      http.get(`${API}/campaigns/all`, () => {
+        paged++;
+        // A bare 403: the policy refused the verb.
+        return allStatus === 403 ? new HttpResponse(null, { status: 403 }) : HttpResponse.json({ total: 1, items: [campaign] });
+      }),
+      http.get(`${API}/campaigns`, () => {
+        suggested++;
+        return HttpResponse.json([{ key: campaign.key, name: campaign.name, value: campaign.value }]);
+      }),
+    );
+    await startSession();
+
+    const recent = await callTool(listCampaigns);
+
+    expect(paged).toBe(1);
+    expect(suggested).toBe(1);
+    expect(recent.isError).toBeFalsy();
+    expect(recent.structuredContent).toMatchObject({ source: "recent", total: 1 });
+
+    allStatus = 200;
+    const all = await callTool(listCampaigns);
+
+    expect(paged).toBe(2);
+    expect(suggested).toBe(1);
+    expect(all.structuredContent).toMatchObject({ source: "all", total: 1 });
   });
 });

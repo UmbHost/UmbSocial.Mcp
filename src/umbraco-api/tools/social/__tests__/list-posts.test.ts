@@ -109,4 +109,25 @@ describe("list-posts", () => {
 
     expect(query?.get("filters[content]")).toBe(`${pageKey}:en-GB`);
   });
+
+  it("list_posts_count_call_leaves_out_newest_first", async () => {
+    let listed: URLSearchParams | undefined;
+    let counted: URLSearchParams | undefined;
+    server.use(
+      http.get(`${API}/posts`, ({ request }) => {
+        listed = new URL(request.url).searchParams;
+        return HttpResponse.json(manyPosts(500));
+      }),
+      http.get(`${API}/posts/count`, ({ request }) => {
+        counted = new URL(request.url).searchParams;
+        return HttpResponse.json({ count: 612 });
+      }),
+    );
+
+    await callTool(listPosts, { newestFirst: true });
+
+    expect(listed?.get("newestFirst")).toBe("true");
+    expect(counted).toBeDefined();
+    expect(counted?.has("newestFirst")).toBe(false);
+  });
 });
