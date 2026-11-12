@@ -50,5 +50,6 @@ npm test          # unit tests (MSW)
 UMBSOCIAL_LIVE=1 npm run test:live   # live checks against running sites (tests/live/README.md); never in CI
 npm run build     # tsup, then the SDK's tool-types generator
 npm run generate  # the client from the committed Swagger snapshot (no site needed)
+npm run tools-table  # docs/tools-table.md and docs/refusal-hints.md, for the docs site (a test fails when they are stale)
 ./scripts/generate.ps1 -SiteUrl https://localhost:44391   # refresh the snapshot from a running site, then generate
 ```

@@ -1,10 +1,105 @@
 # UmbSocial MCP server
 
-`@umbhost/umbsocial-mcp` lets an AI assistant read the UmbSocial calendar and write draft posts on an Umbraco 17 site, through UmbSocial's own management API, as an Umbraco API user over stdio.
+`@umbhost/umbsocial-mcp` lets an AI assistant work with [UmbSocial](https://docs.umb.social) on an Umbraco 17 site. The assistant can read the Social calendar, channels and campaigns, and write **draft** posts. A person reviews every draft in the Umbraco backoffice before it can go on the calendar.
 
-It's built on Umbraco's [MCP server SDK](https://www.npmjs.com/package/@umbraco-cms/mcp-server-sdk) and chains to the [CMS Developer MCP](https://www.npmjs.com/package/@umbraco-cms/mcp-dev) for media and document keys.
+It runs on your machine over stdio and signs in to the site as an Umbraco **API user**, using that user's client credentials. It calls only UmbSocial's own management API.
 
-**Work in progress.** It isn't published yet, and set-up instructions will follow.
+**Not released yet.** The package isn't on npm, so the configuration below won't work until the first release. See [CHANGELOG.md](CHANGELOG.md).
+
+## How it differs from the docs MCP
+
+UmbSocial's documentation has its own MCP server at `https://docs.umb.social/mcp`. That one searches and reads the docs, needs no site and no sign-in, and changes nothing.
+
+This server works on **your site**: it reads your posts and writes drafts as the API user you give it. Use the docs MCP to learn how UmbSocial works, and this one to work with your own Social calendar. You can connect both.
+
+## Requirements
+
+- Node.js 22.3 or later.
+- An Umbraco 17 site with UmbSocial installed. UmbSocial Pro adds more tools, such as approvals, templates and tags, when the site is licensed.
+- An Umbraco **API user** with client credentials, in a user group that has the **Social** section and the Social permissions you want the assistant to have. Start with **View** and **Write**.
+  - To tie posts to pages and pick images, the group also needs the **Content** and **Media** sections, start nodes, and Umbraco's **Browse** permission on those pages.
+  - Give each person their own API user. Everyone using one API user shares its drafts and its rate limits.
+
+The full set-up is in the docs: [The UmbSocial MCP server](https://docs.umb.social/17/getting-started/mcp-server/).
+
+## Configuration
+
+For Claude Code, in `.mcp.json`:
+
+```json
+{
+  "mcpServers": {
+    "umbsocial": {
+      "command": "npx",
+      "args": ["-y", "@umbhost/umbsocial-mcp@1.0.0"],
+      "env": {
+        "UMBRACO_BASE_URL": "https://www.example.com",
+        "UMBRACO_CLIENT_ID": "umbraco-back-office-social-assistant",
+        "UMBRACO_CLIENT_SECRET": "${UMBSOCIAL_CLIENT_SECRET}"
+      }
+    }
+  }
+}
+```
+
+Claude Code fills `${UMBSOCIAL_CLIENT_SECRET}` from your environment, so the secret stays out of the file. The server also reads a `.env` file in its working directory; [.env.example](.env.example) lists every variable.
+
+| Variable | Meaning |
+|---|---|
+| `UMBRACO_BASE_URL` | The site's address. It must use https; plain http is allowed only for `localhost`, `127.0.0.1` and `[::1]`. |
+| `UMBRACO_CLIENT_ID`, `UMBRACO_CLIENT_SECRET` | The API user's client credentials. |
+| `UMBSOCIAL_ENABLE_SLICES` | Turns on tools that are off by default: `approve` (approve and return posts) and `resolve` (retry a channel, or mark it as published). |
+| `DISABLE_MCP_CHAINING` | `true` to leave out the chained CMS server (below) and its `cms--` tools. |
+| `UMBRACO_TOOL_MODES`, `UMBRACO_INCLUDE_SLICES`, `UMBRACO_EXCLUDE_TOOLS` and the rest | The SDK's tool filters. `UMBRACO_READONLY=true` keeps only the tools that read. |
+
+The docs have the configuration for Claude Desktop, Cursor and VS Code in [The UmbSocial MCP server](https://docs.umb.social/17/getting-started/mcp-server/), every variable in [MCP server configuration](https://docs.umb.social/17/reference/mcp-configuration/), and every tool in [MCP tools](https://docs.umb.social/17/reference/mcp-tools/).
+
+### A local site with a self-signed certificate
+
+Trust the certificate; never turn TLS checks off (`NODE_TLS_REJECT_UNAUTHORIZED=0`). Point `NODE_EXTRA_CA_CERTS` at the certificate in PEM format, or, if the certificate is in your system's store, add `--use-system-ca` to `NODE_OPTIONS`. `--use-system-ca` needs Node.js 22.15 or later.
+
+## The chained CMS server
+
+Posts refer to Umbraco media and pages by key, so this server starts Umbraco's own [CMS Developer MCP](https://www.npmjs.com/package/@umbraco-cms/mcp-dev) alongside it, to find those keys. Its tools appear with a `cms--` prefix. It runs:
+
+- **read-only** (`UMBRACO_READONLY=true`), limited to eight tools that browse and search media and documents;
+- as the same API user, so it sees only that user's start nodes;
+- pinned to an exact version (`@umbraco-cms/mcp-dev@17.6.12`), but **resolved by `npx` when the server starts**. Its own dependencies are resolved then too, outside this package's lock file.
+
+`DISABLE_MCP_CHAINING=true` turns it off. The Social tools still work; the assistant then needs media and page keys from you.
+
+## Safety
+
+- **The site enforces the AI rule.** Every post an API user creates or changes is marked as written with AI, and an API user never counts as a reviewer. A person must review an AI-written post in the backoffice before it can be scheduled. No tool can get round this, and no tool result suggests trying.
+- **Drafts only.** The writing tools save drafts. `update-post` and `delete-post` change only drafts and posts awaiting approval: a post on the calendar, or one already sent, is left as a person left it.
+- **Off by default.** The `approve` and `resolve` tools act on review and on live networks, so they're registered only when `UMBSOCIAL_ENABLE_SLICES` names them (naming one in `UMBRACO_INCLUDE_TOOLS` isn't enough), and only for a user with the matching permission.
+- **The API user's permissions decide.** A tool is listed only when the API user's group has a permission that can use it, and Pro's tools only when the site is licensed. The site checks every call again.
+- **Secrets.** The client secret and access tokens never appear in tool results, errors or logs. Keep `.env` out of source control.
+- **Start on a staging site.** Try it against a copy of your site before you connect it to the live one.
+
+## Development
+
+```bash
+npm ci
+npm run compile       # type-check
+npm test              # unit tests, against mocks only
+npm run build         # bundle, then generate the tool types
+npm run tools-table   # regenerate docs/tools-table.md and docs/refusal-hints.md
+UMBSOCIAL_LIVE=1 npm run test:live   # against running test sites; see tests/live/README.md
+```
+
+`npm test` fails when `docs/tools-table.md` or `docs/refusal-hints.md` no longer matches the code. Run `npm run tools-table`, then copy the tables into the docs site's [MCP tools](https://docs.umb.social/17/reference/mcp-tools/) and [Error codes](https://docs.umb.social/17/reference/error-codes/) pages.
+
+The generated API client is built from a committed Swagger snapshot. See [CLAUDE.md](CLAUDE.md) for how to regenerate it.
+
+### Before bumping a dependency
+
+- **`@umbraco-cms/mcp-dev`** (`CMS_MCP_PACKAGE` in `src/config/mcp-servers.ts`): check the environment variables the new version reads against the filter variables blanked for it (`INHERITED_FILTERS_BLANKED`), so none of this server's own filters reaches it. Check that the eight tools in `CMS_TOOLS` still exist under those names, then rerun the live checks.
+- **`@umbraco-cms/mcp-server-sdk`**: `INTROSPECTION_FLAGS` in `src/index.ts` is a copy of the SDK's offline flags (`--list-tools` and the rest), which skip the configuration check. Compare it with the new version's.
+
+### Releasing
+
+`.github/workflows/release.yml` builds, tests and publishes to npm with provenance, under the `lts-17` dist-tag, when a `v*` tag matching `package.json`'s version is pushed. It publishes nothing until the owner has chosen how it signs in to npm: npm Trusted Publishing (preferred) or an `NPM_TOKEN` secret. The workflow's header says how to set up each. Run it by hand for a dry run.
 
 ## Licence
 

@@ -1,0 +1,95 @@
+name: Release
+
+# Publishes @umbhost/umbsocial-mcp to npm with provenance when a v* tag is
+# pushed. It publishes nothing until the owner has set it up:
+#
+#   1. The repository is UmbHost/UmbSocial.Mcp (a fork or a copy never publishes).
+#   2. The repository variable NPM_PUBLISH_METHOD is set, choosing how to sign in:
+#        trusted  npm Trusted Publishing (preferred): on npmjs.com, add this
+#                 repository, this workflow (release.yml) and the environment
+#                 "npm" as the package's trusted publisher. No token is stored.
+#        token    an npm automation token in the repository secret NPM_TOKEN.
+#      Unset (or anything else), a tag builds and tests but publishes nothing.
+#
+# Run it by hand (workflow_dispatch) for a dry run: it builds, tests and runs
+# `npm publish --dry-run`, which publishes nothing whatever the variable says.
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    environment: npm
+    permissions:
+      contents: read
+      id-token: write # Trusted Publishing and provenance
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Node 24's npm (11.5.1 or later) can publish through Trusted Publishing.
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 24.14.1
+          registry-url: https://registry.npmjs.org
+          cache: npm
+
+      - run: npm ci
+      - run: npm run compile
+      - run: npm test
+      - run: npm run build
+
+      - name: The tag matches the package version
+        if: github.event_name == 'push'
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          version="v$(node -p "require('./package.json').version")"
+          if [ "$TAG" != "$version" ]; then
+            echo "The tag $TAG doesn't match package.json ($version)." >&2
+            exit 1
+          fi
+
+      - name: The package holds only dist, the README, the licence and package.json
+        run: |
+          npm pack --dry-run --json > pack.json
+          node -e '
+            const files = require("./pack.json")[0].files.map((f) => f.path);
+            const allowed = (p) => p.startsWith("dist/") || ["README.md", "LICENSE", "package.json"].includes(p);
+            const extra = files.filter((p) => !allowed(p));
+            console.log(files.join("\n"));
+            if (extra.length) { console.error("Not allowed in the package: " + extra.join(", ")); process.exit(1); }
+          '
+          rm pack.json
+
+      - name: Dry run
+        if: github.event_name != 'push'
+        run: npm publish --dry-run --provenance --access public --tag lts-17
+
+      - name: Publish
+        if: >-
+          github.event_name == 'push' &&
+          github.repository == 'UmbHost/UmbSocial.Mcp' &&
+          (vars.NPM_PUBLISH_METHOD == 'trusted' || vars.NPM_PUBLISH_METHOD == 'token')
+        env:
+          # Empty for Trusted Publishing, so npm signs in with the workflow's OIDC token.
+          NODE_AUTH_TOKEN: ${{ vars.NPM_PUBLISH_METHOD == 'token' && secrets.NPM_TOKEN || '' }}
+        run: npm publish --provenance --access public --tag lts-17
+
+      - name: Not published
+        if: >-
+          github.event_name == 'push' &&
+          !(github.repository == 'UmbHost/UmbSocial.Mcp' &&
+            (vars.NPM_PUBLISH_METHOD == 'trusted' || vars.NPM_PUBLISH_METHOD == 'token'))
+        run: echo "::notice::Built and tested, but not published. Set the repository variable NPM_PUBLISH_METHOD (see release.yml) to publish."
