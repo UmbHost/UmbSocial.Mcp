@@ -11,8 +11,10 @@
  */
 
 import type { ToolCollectionExport } from "@umbraco-cms/mcp-server-sdk";
+import { socialCollection } from "./umbraco-api/tools/social/index.js";
+import { socialProCollection } from "./umbraco-api/tools/social-pro/index.js";
 
-export const collections: ToolCollectionExport[] = [];
+export const collections: ToolCollectionExport[] = [socialCollection, socialProCollection];
 
 export { allModes, allModeNames } from "./config/mode-registry.js";
 export { allSliceNames } from "./config/slice-registry.js";

@@ -11,7 +11,6 @@ import {
   initializeUmbracoFetch,
   createToolAnnotations,
   createCollectionConfigLoader,
-  shouldIncludeTool,
   handleCliCommands,
   checkUmbracoVersion,
   configureVersionCheckHook,
@@ -20,8 +19,8 @@ import {
   configureApiClient,
   discoverProxiedTools,
   createProxyHandler,
-  jsonSchemaObjectToZodObject,
   UmbracoManagementClient,
+  UmbracoApiError,
   CAPTURE_RAW_HTTP_RESPONSE,
   SERVER_INFORMATION_PATH,
   useDraft202012ToolSchemas,
@@ -32,7 +31,9 @@ import {
 import { collections } from "./collections.js";
 import { getSocialApi } from "./umbraco-api/api/client.js";
 import { mcpClientManager } from "./umbraco-api/mcp-client.js";
-import { mcpServers } from "./config/mcp-servers.js";
+import { mcpServers, proxiedToolConfig } from "./config/mcp-servers.js";
+import { startSession, toolsFor } from "./session/start-session.js";
+import type { CurrentUser } from "./session/social-user.js";
 import {
   allModes,
   allModeNames,
@@ -47,6 +48,19 @@ import {
 } from "./config/index.js";
 
 const SERVER_NAME = "umbsocial-mcp";
+
+/**
+ * Only an error's message is logged, never the whole object, which can hold a
+ * request or a response body. A refusal adds its codes and hint.
+ */
+function errorMessage(error: unknown): string {
+  if (error instanceof UmbracoApiError) {
+    const { codes, hint } = error.problemDetails as { codes?: unknown; hint?: unknown };
+    const named = Array.isArray(codes) && codes.length > 0 ? ` [${codes.join(", ")}]` : "";
+    return `${error.message}${named}${typeof hint === "string" ? ` ${hint}` : ""}`;
+  }
+  return error instanceof Error ? error.message : String(error);
+}
 
 // ============================================================================
 // Configuration
@@ -156,32 +170,35 @@ const server = new McpServer(
   versionCheckMessage ? { instructions: versionCheckMessage } : undefined,
 );
 
+// Who's calling and the edition, before any tool is chosen: tools are hidden
+// from a user without the verb they need, and Pro's when the site isn't licensed.
+let currentUser: CurrentUser | undefined;
+if (socialConfig) {
+  try {
+    currentUser = (await startSession()).user;
+  } catch (error) {
+    console.error(`${SERVER_NAME}: couldn't read the API user or the edition: ${errorMessage(error)}`);
+    process.exit(1);
+  }
+}
+
 let registeredToolCount = 0;
 
-for (const collection of collections) {
-  const collectionName = collection.metadata.name;
-  const tools = collection.tools({});
+for (const { tool, collectionName } of toolsFor(collections, currentUser, filterConfig)) {
+  registerToolCollection(tool.name, collectionName);
 
-  for (const tool of tools) {
-    if (!shouldIncludeTool(tool, { collectionName, config: filterConfig })) {
-      continue;
-    }
+  server.registerTool(
+    tool.name,
+    {
+      description: tool.description,
+      inputSchema: tool.inputSchema,
+      outputSchema: tool.outputSchema,
+      annotations: createToolAnnotations(tool),
+    },
+    tool.handler as ToolCallback<typeof tool.inputSchema>,
+  );
 
-    registerToolCollection(tool.name, collectionName);
-
-    server.registerTool(
-      tool.name,
-      {
-        description: tool.description,
-        inputSchema: tool.inputSchema,
-        outputSchema: tool.outputSchema,
-        annotations: createToolAnnotations(tool),
-      },
-      tool.handler as ToolCallback<typeof tool.inputSchema>,
-    );
-
-    registeredToolCount++;
-  }
+  registeredToolCount++;
 }
 
 // ============================================================================
@@ -200,14 +217,9 @@ async function registerChainedTools(): Promise<number> {
   try {
     const proxiedTools = await discoverProxiedTools(mcpClientManager);
     for (const pt of proxiedTools) {
-      // As Umbraco's hosted server registers them: the chained tool's own input
-      // schema, so the client sees its parameters.
       server.registerTool(
         pt.prefixedName,
-        {
-          description: `[Proxied from ${pt.serverName}] ${pt.originalTool.description || "No description"}`,
-          inputSchema: jsonSchemaObjectToZodObject(pt.originalTool.inputSchema),
-        },
+        proxiedToolConfig(pt),
         // The SDK types the proxy's result loosely; the chained server returns MCP results.
         createProxyHandler(mcpClientManager, pt.serverName, pt.originalTool.name) as never,
       );
@@ -215,7 +227,7 @@ async function registerChainedTools(): Promise<number> {
     return proxiedTools.length;
   } catch (error) {
     // Social tools still work without the chained server.
-    console.error(`${SERVER_NAME}: the chained CMS server's tools aren't available:`, error);
+    console.error(`${SERVER_NAME}: the chained CMS server's tools aren't available: ${errorMessage(error)}`);
     return 0;
   }
 }
@@ -243,6 +255,6 @@ process.on("SIGINT", shutdown);
 process.on("SIGTERM", shutdown);
 
 main().catch((error) => {
-  console.error(`${SERVER_NAME}: failed to start:`, error);
+  console.error(`${SERVER_NAME}: failed to start: ${errorMessage(error)}`);
   process.exit(1);
 });

@@ -6,7 +6,14 @@
  * client as `cms--<tool>`.
  */
 
-import type { McpServerConfig } from "@umbraco-cms/mcp-server-sdk";
+import {
+  createToolAnnotations,
+  jsonSchemaObjectToZodObject,
+  type McpServerConfig,
+  type ProxiedTool,
+} from "@umbraco-cms/mcp-server-sdk";
+import type { ToolAnnotations } from "@modelcontextprotocol/sdk/types.js";
+import type { ZodTypeAny } from "zod";
 import type { SocialConfig } from "./server-config.js";
 
 /** The CMS Developer MCP, pinned exactly. `npx` resolves it at run time. */
@@ -62,4 +69,25 @@ export function mcpServers(config: SocialConfig): McpServerConfig[] {
       proxyTools: true,
     },
   ];
+}
+
+/**
+ * How a proxied `cms` tool is registered with this server: as Umbraco's hosted
+ * server registers them (the chained tool's own input schema, so the client
+ * sees its parameters), and marked read-only. The SDK's `ProxiedTool` carries
+ * no annotations; every chained tool is a read (`UMBRACO_READONLY` and the
+ * eight tools above).
+ */
+export function proxiedToolConfig(pt: ProxiedTool): {
+  description: string;
+  inputSchema: ZodTypeAny;
+  annotations: ToolAnnotations;
+} {
+  return {
+    description: `[Proxied from ${pt.serverName}] ${pt.originalTool.description || "No description"}`,
+    inputSchema: jsonSchemaObjectToZodObject(pt.originalTool.inputSchema),
+    annotations: createToolAnnotations({ annotations: { readOnlyHint: true } } as Parameters<
+      typeof createToolAnnotations
+    >[0]),
+  };
 }

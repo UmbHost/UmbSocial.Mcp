@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it } from "@jest/globals";
 import type { SocialConfig } from "../server-config.js";
-import { CMS_ID_TOOLS, mcpServers } from "../mcp-servers.js";
+import { CMS_ID_TOOLS, mcpServers, proxiedToolConfig } from "../mcp-servers.js";
 
 const config: SocialConfig = {
   baseUrl: new URL("https://cms.example.com/"),
@@ -71,5 +71,22 @@ describe("the chained CMS server", () => {
     }
     expect(childEnv.UMBRACO_INCLUDE_TOOLS?.split(",")).toHaveLength(8);
     expect(childEnv.UMBRACO_READONLY).toBe("true");
+  });
+});
+
+describe("proxied cms tools", () => {
+  it("proxied_cms_tools_are_marked_read_only", () => {
+    const registration = proxiedToolConfig({
+      prefixedName: "cms--get-media-root",
+      serverName: "cms",
+      originalTool: {
+        name: "get-media-root",
+        description: "Gets the media root",
+        inputSchema: { type: "object", properties: {} },
+      },
+    });
+
+    expect(registration.annotations.readOnlyHint).toBe(true);
+    expect(registration.description).toBe("[Proxied from cms] Gets the media root");
   });
 });
