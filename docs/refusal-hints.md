@@ -11,6 +11,7 @@
 | `approval.when_invalid` | Approving needs a time: Queue, At, Now or, for a post with a page, OnPagePublish. |
 | `campaign.unknown` | That campaign doesn't exist any more. Use list-campaigns. |
 | `channel.unknown` | That channel has been removed, so nothing can be sent to it. |
+| `confirmation.required` | This step can't be undone, and this client can't ask the person to confirm it. Ask the person in the conversation first; only if they say yes, call the tool again with confirm: true. |
 | `field.required:culture` | The page varies by language, so the post must name one of its languages. |
 | `field.required:note` | Returning a post needs a note saying what to change. |
 | `field.too_long:note` | The note can be at most 1000 characters. |

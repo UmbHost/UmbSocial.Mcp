@@ -7,10 +7,11 @@ import { createToolResult, withStandardDecorators, type ToolDefinition } from "@
 import type { PostResponse } from "../../../api/generated/umbSocialApi.js";
 import { callSocial } from "../../../../session/refusals.js";
 import { assertEditable, assertVersion } from "../post-request.js";
-import { confirmIfSupported, enabledFor } from "../shared.js";
+import { confirmIfSupported, confirmInput, enabledFor } from "../shared.js";
 
 const inputSchema = {
   key: z.guid().describe("The post's key, from list-posts."),
+  confirm: confirmInput,
 };
 
 const outputSchema = z.object({
@@ -23,19 +24,19 @@ const deletePostTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = 
   name: "delete-post",
   description:
     "Deletes a Social draft, or a post awaiting approval, for good. Any other post is refused with post.not_draft and left as it is. " +
-    "The person may be asked to confirm first. Without the Social Schedule permission, it deletes only this user's own posts. " +
+    "The person is asked to confirm first; a client that can't ask needs confirm: true. Without the Social Schedule permission, it deletes only this user's own posts. " +
     "Needs the Social Write permission.",
   slices: ["delete"],
   annotations: { destructiveHint: true },
   inputSchema,
   outputSchema,
   enabled: enabledFor(["Write"]),
-  handler: async ({ key }, extra) => {
+  handler: async ({ key, confirm }, extra) => {
     const read = await callSocial<PostResponse>((api, raw) => api.getPost(key, raw));
     assertEditable(read.data);
 
     const excerpt = [...read.data.text].slice(0, 80).join("");
-    if (!(await confirmIfSupported(extra, `Delete the Social post "${excerpt}" for good?`))) {
+    if (!(await confirmIfSupported(extra, `Delete the Social post "${excerpt}" for good?`, confirm))) {
       return createToolResult({ key, deleted: false, message: "The person chose not to delete the post." });
     }
 

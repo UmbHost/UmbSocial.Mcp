@@ -9,7 +9,7 @@ import type { PostKeyResponse } from "../../../api/generated/umbSocialApi.js";
 import { callSocial, REFUSAL_HINTS } from "../../../../session/refusals.js";
 import { toUtcParam } from "../../../../session/time.js";
 import { PAGE_DELAYS } from "../../social/post-input.js";
-import { confirmIfSupported, enabledFor } from "../../social/shared.js";
+import { confirmIfSupported, confirmInput, enabledFor } from "../../social/shared.js";
 import { NEEDS_PRO } from "../shared.js";
 
 /** The times an approval takes (`ApprovalService.ApproveAsync`): every `When` but Draft. */
@@ -37,6 +37,7 @@ const inputSchema = {
     .union([z.literal(PAGE_DELAYS[0]), z.literal(PAGE_DELAYS[1]), z.literal(PAGE_DELAYS[2])])
     .optional()
     .describe("With OnPagePublish: minutes after the page goes live, 0, 60 or 1440. Leave it out for the queue's next free slot after that."),
+  confirm: confirmInput,
 };
 
 const outputSchema = z.object({
@@ -53,23 +54,24 @@ const approvePostTool: ToolDefinition<typeof inputSchema, typeof outputSchema> =
     "A person should approve posts in the Umbraco backoffice; this tool is off unless UMBSOCIAL_ENABLE_SLICES names the approve slice.",
     "The site refuses an API user approving a post written with AI, and every post an API user writes counts as that, so this works only for a post a person wrote.",
     "Now publishes the post to its live networks at once, and is rate limited for everyone using the same API user. OnPagePublish needs a post tied to a page.",
-    "At needs an atUtc in the future, and pageDelayMinutes goes only with OnPagePublish. The person may be asked to confirm first.",
+    "At needs an atUtc in the future, and pageDelayMinutes goes only with OnPagePublish.",
+    "The person is asked to confirm first; a client that can't ask needs confirm: true.",
     "Needs the Social Approve permission.",
     NEEDS_PRO,
   ].join(" "),
   slices: ["approve"],
-  annotations: { openWorldHint: true },
+  annotations: { destructiveHint: true, openWorldHint: true },
   inputSchema,
   outputSchema,
   enabled: enabledFor(["Approve"]),
-  handler: async ({ key, expectedVersion, when, atUtc, pageDelayMinutes }, extra) => {
+  handler: async ({ key, expectedVersion, when, atUtc, pageDelayMinutes, confirm }, extra) => {
     if (when === "At" && (!atUtc || Date.parse(atUtc) <= Date.now())) refuse(PAST);
     if (pageDelayMinutes !== undefined && when !== "OnPagePublish") refuse(DELAY_NEEDS_PAGE_PUBLISH);
     const question =
       when === "Now"
         ? `Approve post ${key} and publish it to its live networks now?`
         : `Approve post ${key} and put it on the calendar (${when})?`;
-    if (!(await confirmIfSupported(extra, question))) {
+    if (!(await confirmIfSupported(extra, question, confirm))) {
       return createToolResult({ key, approved: false, message: "The person chose not to approve the post." });
     }
     const request = {

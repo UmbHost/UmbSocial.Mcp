@@ -38,7 +38,8 @@ describe("the resolve tools", () => {
 
   it("they_are_marked_open_world_and_destructive", () => {
     expect(retryPostTarget.annotations).toMatchObject({ destructiveHint: true, openWorldHint: true });
-    expect(markPostTargetPublished.annotations).toMatchObject({ openWorldHint: true });
+    // It can't be undone, and it fires the site's "published" webhooks.
+    expect(markPostTargetPublished.annotations).toMatchObject({ destructiveHint: true, openWorldHint: true });
     expect(retryPostTarget.slices).toEqual(["resolve"]);
     expect(markPostTargetPublished.slices).toEqual(["resolve"]);
   });
@@ -57,11 +58,6 @@ describe("the resolve tools", () => {
     expect(markPostTargetPublished.description).not.toMatch(/rate limit/i);
   });
 
-  it("mark_published_is_explicitly_not_destructive", () => {
-    // It sends nothing to a network: it records what a person saw there.
-    expect(markPostTargetPublished.annotations).toHaveProperty("destructiveHint", false);
-  });
-
   it("retry_posts_to_the_target_and_returns_the_key_and_version", async () => {
     let called = 0;
     server.use(
@@ -71,7 +67,7 @@ describe("the resolve tools", () => {
       }),
     );
 
-    const result = await callTool(retryPostTarget, { targetId: 42 });
+    const result = await callTool(retryPostTarget, { targetId: 42, confirm: true });
 
     expect(called).toBe(1);
     expect(result.structuredContent).toEqual({ ...SAVED, targetId: 42, retried: true });
@@ -88,14 +84,14 @@ describe("the resolve tools", () => {
 
     const elicitInput = jest.fn(async () => ({ action: "decline" }));
     setServerRef({ getClientCapabilities: () => ({ elicitation: { form: {} } }), elicitInput } as never);
-    const declined = await callTool(retryPostTarget, { targetId: 42 });
+    const declined = await callTool(retryPostTarget, { targetId: 42, confirm: true });
 
     expect(elicitInput).toHaveBeenCalledTimes(1);
     expect(called).toBe(0);
     expect(declined.structuredContent).toMatchObject({ targetId: 42, retried: false });
 
     elicitInput.mockImplementation(async () => ({ action: "accept", content: { confirm: true } }));
-    const done = await callTool(retryPostTarget, { targetId: 42 });
+    const done = await callTool(retryPostTarget, { targetId: 42, confirm: true });
 
     expect(called).toBe(1);
     expect(done.structuredContent).toMatchObject({ ...SAVED, retried: true });
@@ -107,7 +103,7 @@ describe("the resolve tools", () => {
       server.use(
         http.post(`${API}/targets/7/retry`, () => HttpResponse.json({ codes: [code] }, { status: 400, headers: { "X-UmbSocial-Codes": code } })),
       );
-      const body = errorBody(await callTool(retryPostTarget, { targetId: 7 })) as { codes: string[]; hint?: string };
+      const body = errorBody(await callTool(retryPostTarget, { targetId: 7, confirm: true })) as { codes: string[]; hint?: string };
       expect(body.codes).toEqual([code]);
       expect(body.hint).toBeTruthy();
     }
@@ -117,7 +113,7 @@ describe("the resolve tools", () => {
     jest.spyOn(console, "error").mockImplementation(() => {});
     server.use(http.post(`${API}/targets/7/retry`, () => new HttpResponse(null, { status: 429, headers: { "X-UmbSocial-Codes": "rate.limited" } })));
 
-    const body = errorBody(await callTool(retryPostTarget, { targetId: 7 })) as { codes: string[]; hint?: string };
+    const body = errorBody(await callTool(retryPostTarget, { targetId: 7, confirm: true })) as { codes: string[]; hint?: string };
     expect(body).toMatchObject({ codes: ["rate.limited"], status: 429 });
   });
 
@@ -130,10 +126,10 @@ describe("the resolve tools", () => {
       }),
     );
 
-    const result = await callTool(markPostTargetPublished, { targetId: 42, postUrl: "https://x.com/me/status/1?s=20&t=a" });
+    const result = await callTool(markPostTargetPublished, { targetId: 42, postUrl: "https://x.com/me/status/1?s=20&t=a", confirm: true });
 
     expect(body).toEqual({ postUrl: "https://x.com/me/status/1?s=20&t=a" });
-    expect(result.structuredContent).toEqual(SAVED);
+    expect(result.structuredContent).toEqual({ ...SAVED, targetId: 42, marked: true });
   });
 
   it("mark_published_takes_https_only", () => {
@@ -156,7 +152,7 @@ describe("the resolve tools", () => {
       server.use(
         http.post(`${API}/targets/7/mark-published`, () => HttpResponse.json({ codes: [code] }, { status: 400, headers: { "X-UmbSocial-Codes": code } })),
       );
-      const body = errorBody(await callTool(markPostTargetPublished, { targetId: 7, postUrl: "https://example.com/p" })) as {
+      const body = errorBody(await callTool(markPostTargetPublished, { targetId: 7, postUrl: "https://example.com/p", confirm: true })) as {
         codes: string[];
         hint?: string;
       };

@@ -19,7 +19,7 @@ describe("the MCP server", () => {
       .spyOn(server.server, "elicitInput")
       .mockResolvedValue({ action: "accept", content: { confirm: true } });
 
-    await expect(confirmIfSupported({ requestId: 1 }, "Delete this draft?")).resolves.toBe(true);
+    await expect(confirmIfSupported({ requestId: 1 }, "Delete this draft?", undefined)).resolves.toBe(true);
     expect(elicitInput).toHaveBeenCalledTimes(1);
   });
 });

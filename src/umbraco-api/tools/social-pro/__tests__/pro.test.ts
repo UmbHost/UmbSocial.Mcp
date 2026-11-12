@@ -132,6 +132,7 @@ describe("the Pro tools", () => {
       expectedVersion: VERSION,
       when: "OnPagePublish",
       pageDelayMinutes: 60,
+      confirm: true,
     });
 
     expect(result.isError).toBeFalsy();

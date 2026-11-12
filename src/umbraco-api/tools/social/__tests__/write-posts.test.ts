@@ -345,9 +345,9 @@ describe("writing posts", () => {
     expect(deleted).toBe(0);
     expect(declined.structuredContent).toMatchObject({ key: post.key, deleted: false });
 
-    // A client without elicitation: its own permission dialog was the consent.
+    // A client without elicitation: the caller says the person agreed.
     setServerRef({ getClientCapabilities: () => ({}), elicitInput } as never);
-    const done = await callTool(deletePost, { key: post.key });
+    const done = await callTool(deletePost, { key: post.key, confirm: true });
 
     expect(elicitInput).toHaveBeenCalledTimes(1);
     expect(deleted).toBe(1);

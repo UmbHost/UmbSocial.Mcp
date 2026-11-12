@@ -103,6 +103,8 @@ export const REFUSAL_HINTS: Readonly<Record<string, string>> = {
   "utm.field_locked": "The site sets this UTM field centrally, so a post can't change it. Leave it out.",
   "utm.value_too_long": "A UTM value can be at most 100 characters.",
   "short_links.too_many_keys": "Ask for the clicks of at most 200 posts at a time.",
+  "confirmation.required":
+    "This step can't be undone, and this client can't ask the person to confirm it. Ask the person in the conversation first; only if they say yes, call the tool again with confirm: true.",
 };
 
 function hintFor(code: string): string | undefined {

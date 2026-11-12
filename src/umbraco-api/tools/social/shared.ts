@@ -3,7 +3,15 @@
  * permission each needs, and asking the person before a destructive step.
  */
 
-import { confirmAction, getSupportedElicitationKind, rejectControlCharacters, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
+import { z } from "zod";
+import {
+  confirmAction,
+  getSupportedElicitationKind,
+  rejectControlCharacters,
+  UmbracoApiError,
+  type ToolDefinition,
+} from "@umbraco-cms/mcp-server-sdk";
+import { REFUSAL_HINTS } from "../../../session/refusals.js";
 import { can, toSocialUser, type CurrentUser, type SocialVerb } from "../../../session/social-user.js";
 
 /** A tool's `enabled`: the user has the Social section and any one of these verbs. */
@@ -15,24 +23,45 @@ export const NEEDS_READ = "Needs the Social View, Write or Manage settings permi
 export const NEEDS_READ_POST = "Needs the Social View or Write permission.";
 export const NEEDS_WRITE = "Needs the Social Write permission.";
 
+const CONFIRMATION_REQUIRED = "confirmation.required";
+
 /**
- * Asks the person to confirm, but only when the client can ask (form or base
- * elicitation). Otherwise it answers true: a client without elicitation shows
- * its own permission dialog before any tool call, as the SDK's
- * `requestApproval` assumes. No prompt of our own.
+ * The `confirm` input every destructive tool takes. It counts only when the
+ * client can't ask the person itself.
+ */
+export const confirmInput = z
+  .boolean()
+  .optional()
+  .describe(
+    "Set to true only after the person has said yes to this exact step in the conversation. Needed when the client can't ask the person itself; otherwise the person is asked and this is ignored.",
+  );
+
+/**
+ * Asks the person to confirm when the client can ask (form or base
+ * elicitation), whatever `confirm` says. When it can't, the step goes ahead
+ * only if the caller passed `confirm: true`, and is otherwise refused with
+ * `confirmation.required`: the client's own permission prompt is not enough,
+ * since it may auto-approve.
  *
  * Hand-rolled because the SDK lacks it: `confirmAction` throws when the client
  * can't elicit, and `getSupportedElicitationKind` throws when no server is set.
  */
-export async function confirmIfSupported(extra: { requestId?: string | number } | undefined, message: string): Promise<boolean> {
+export async function confirmIfSupported(
+  extra: { requestId?: string | number } | undefined,
+  message: string,
+  confirm: boolean | undefined,
+): Promise<boolean> {
   let kind: ReturnType<typeof getSupportedElicitationKind>;
   try {
     kind = getSupportedElicitationKind();
   } catch {
     kind = "unknown";
   }
-  if (kind !== "form" && kind !== "base") return true;
-  return confirmAction(extra, message, { title: "Confirm", defaultValue: false });
+  if (kind === "form" || kind === "base") {
+    return confirmAction(extra, message, { title: "Confirm", defaultValue: false });
+  }
+  if (confirm === true) return true;
+  throw new UmbracoApiError({ codes: [CONFIRMATION_REQUIRED], status: 400, hint: REFUSAL_HINTS[CONFIRMATION_REQUIRED] });
 }
 
 /** Every string in a tool's arguments, with its path. */
