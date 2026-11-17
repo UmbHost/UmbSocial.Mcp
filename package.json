@@ -41,6 +41,14 @@
   ],
   "author": "UmbHost Limited",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/UmbHost/UmbSocial.Mcp.git"
+  },
+  "homepage": "https://github.com/UmbHost/UmbSocial.Mcp#readme",
+  "bugs": {
+    "url": "https://github.com/UmbHost/UmbSocial.Mcp/issues"
+  },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
     "@umbraco-cms/mcp-dev": "17.6.12",
