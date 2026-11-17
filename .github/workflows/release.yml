@@ -74,9 +74,17 @@ jobs:
           '
           rm pack.json
 
+      # A prerelease (1.0.0-beta1) goes out under the "beta" dist-tag; a stable version under "lts-17".
+      - name: Choose the dist-tag
+        run: |
+          version="$(node -p "require('./package.json').version")"
+          case "$version" in *-*) tag=beta ;; *) tag=lts-17 ;; esac
+          echo "Publishing $version under the $tag dist-tag."
+          echo "DIST_TAG=$tag" >> "$GITHUB_ENV"
+
       - name: Dry run
         if: github.event_name != 'push'
-        run: npm publish --dry-run --provenance --access public --tag lts-17
+        run: npm publish --dry-run --provenance --access public --tag "$DIST_TAG"
 
       - name: Publish
         if: >-
@@ -86,7 +94,7 @@ jobs:
         env:
           # Empty for Trusted Publishing, so npm signs in with the workflow's OIDC token.
           NODE_AUTH_TOKEN: ${{ vars.NPM_PUBLISH_METHOD == 'token' && secrets.NPM_TOKEN || '' }}
-        run: npm publish --provenance --access public --tag lts-17
+        run: npm publish --provenance --access public --tag "$DIST_TAG"
 
       - name: Not published
         if: >-

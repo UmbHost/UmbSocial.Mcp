@@ -4,7 +4,7 @@
 
 It runs on your machine over stdio and signs in to the site as an Umbraco **API user**, using that user's client credentials. It calls only UmbSocial's own management API.
 
-**Not released yet.** The package isn't on npm, so the configuration below won't work until the first release. See [CHANGELOG.md](CHANGELOG.md).
+**Beta.** The package is a prerelease, published under npm's `beta` dist-tag. See [CHANGELOG.md](CHANGELOG.md).
 
 ## How it differs from the docs MCP
 
@@ -31,7 +31,7 @@ For Claude Code, in `.mcp.json`:
   "mcpServers": {
     "umbsocial": {
       "command": "npx",
-      "args": ["-y", "@umbhost/umbsocial-mcp@1.0.0"],
+      "args": ["-y", "@umbhost/umbsocial-mcp@beta"],
       "env": {
         "UMBRACO_BASE_URL": "https://www.example.com",
         "UMBRACO_CLIENT_ID": "umbraco-back-office-social-assistant",
@@ -106,7 +106,7 @@ The generated API client is built from a committed Swagger snapshot. See [CLAUDE
 
 ### Releasing
 
-`.github/workflows/release.yml` builds, tests and publishes to npm with provenance, under the `lts-17` dist-tag, when a `v*` tag matching `package.json`'s version is pushed. It publishes nothing until the owner has chosen how it signs in to npm: npm Trusted Publishing (preferred) or an `NPM_TOKEN` secret. The workflow's header says how to set up each. Run it by hand for a dry run.
+`.github/workflows/release.yml` builds, tests and publishes to npm with provenance, under the `lts-17` dist-tag (`beta` for a prerelease), when a `v*` tag matching `package.json`'s version is pushed. It publishes nothing until the owner has chosen how it signs in to npm: npm Trusted Publishing (preferred) or an `NPM_TOKEN` secret. The workflow's header says how to set up each. Run it by hand for a dry run.
 
 ## Licence
 

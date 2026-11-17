@@ -1,8 +1,8 @@
 # Changelog
 
-All notable changes to `@umbhost/umbsocial-mcp` are listed here. Versions follow [semantic versioning](https://semver.org). Releases for Umbraco 17 are published under the `lts-17` dist-tag.
+All notable changes to `@umbhost/umbsocial-mcp` are listed here. Versions follow [semantic versioning](https://semver.org). Releases for Umbraco 17 are published under the `lts-17` dist-tag, and prereleases under `beta`.
 
-## 1.0.0 (unreleased)
+## 1.0.0-beta1
 
 The first release, for Umbraco 17.
 
