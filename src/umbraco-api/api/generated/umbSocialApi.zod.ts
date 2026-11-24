@@ -8,7 +8,9 @@ import * as zod from 'zod';
 
 export const suggestAltTextBody = zod.object({
   "postKey": zod.guid(),
-  "mediaKey": zod.guid()
+  "mediaKey": zod.guid(),
+  "text": zod.string().nullish(),
+  "linkTitle": zod.string().nullish()
 })
 
 export const suggestAltTextResponse = zod.object({
@@ -46,6 +48,7 @@ export const getAiOptionsResponse = zod.object({
 export const rewriteTextBody = zod.object({
   "postKey": zod.guid(),
   "channelKey": zod.guid(),
+  "channelKeys": zod.array(zod.guid()).nullish(),
   "text": zod.string().nullish(),
   "instruction": zod.string().nullish()
 })
@@ -57,21 +60,21 @@ export const rewriteTextResponse = zod.object({
 
 
 export const getAiSettingsResponse = zod.object({
-  "profileId": zod.guid().nullish(),
-  "contextId": zod.guid().nullish(),
+  "profileId": zod.guid().nullable(),
+  "contextId": zod.guid().nullable(),
   "sourceHosts": zod.array(zod.string())
 })
 
 
 export const saveAiSettingsBody = zod.object({
-  "profileId": zod.guid().nullish(),
-  "contextId": zod.guid().nullish(),
+  "profileId": zod.guid().nullable(),
+  "contextId": zod.guid().nullable(),
   "sourceHosts": zod.array(zod.string())
 })
 
 export const saveAiSettingsResponse = zod.object({
-  "profileId": zod.guid().nullish(),
-  "contextId": zod.guid().nullish(),
+  "profileId": zod.guid().nullable(),
+  "contextId": zod.guid().nullable(),
   "sourceHosts": zod.array(zod.string())
 })
 
@@ -141,22 +144,6 @@ export const saveApprovalSettingsResponse = zod.object({
 })
 
 
-export const addCampaignBody = zod.object({
-  "name": zod.string(),
-  "value": zod.string().nullish(),
-  "reuseExisting": zod.boolean()
-})
-
-export const addCampaignResponse = zod.object({
-  "key": zod.guid(),
-  "name": zod.string(),
-  "value": zod.string(),
-  "posts": zod.int(),
-  "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "lastUsedUtc": zod.iso.datetime({"local":true,"offset":true}).nullish()
-})
-
-
 export const suggestCampaignsQueryParams = zod.object({
   "query": zod.string().optional()
 })
@@ -169,11 +156,20 @@ export const suggestCampaignsResponseItem = zod.object({
 export const suggestCampaignsResponse = zod.array(suggestCampaignsResponseItem)
 
 
-export const deleteCampaignParams = zod.object({
-  "key": zod.guid()
+export const addCampaignBody = zod.object({
+  "name": zod.string(),
+  "value": zod.string().nullish(),
+  "reuseExisting": zod.boolean()
 })
 
-export const deleteCampaignResponse = zod.unknown()
+export const addCampaignResponse = zod.object({
+  "key": zod.guid(),
+  "name": zod.string(),
+  "value": zod.string(),
+  "posts": zod.int(),
+  "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
+  "lastUsedUtc": zod.iso.datetime({"local":true,"offset":true}).nullable()
+})
 
 
 export const getCampaignParams = zod.object({
@@ -186,7 +182,7 @@ export const getCampaignResponse = zod.object({
   "value": zod.string(),
   "posts": zod.int(),
   "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "lastUsedUtc": zod.iso.datetime({"local":true,"offset":true}).nullish()
+  "lastUsedUtc": zod.iso.datetime({"local":true,"offset":true}).nullable()
 })
 
 
@@ -206,8 +202,15 @@ export const updateCampaignResponse = zod.object({
   "value": zod.string(),
   "posts": zod.int(),
   "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "lastUsedUtc": zod.iso.datetime({"local":true,"offset":true}).nullish()
+  "lastUsedUtc": zod.iso.datetime({"local":true,"offset":true}).nullable()
 })
+
+
+export const deleteCampaignParams = zod.object({
+  "key": zod.guid()
+})
+
+export const deleteCampaignResponse = zod.unknown()
 
 
 export const mergeCampaignParams = zod.object({
@@ -235,7 +238,7 @@ export const listCampaignsResponse = zod.object({
   "value": zod.string(),
   "posts": zod.int(),
   "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "lastUsedUtc": zod.iso.datetime({"local":true,"offset":true}).nullish()
+  "lastUsedUtc": zod.iso.datetime({"local":true,"offset":true}).nullable()
 }))
 })
 
@@ -271,6 +274,50 @@ export const saveChannelScheduleResponse = zod.object({
 })
 
 
+export const listChannelsResponseLimitsImageCropOptionalDefault = false;
+export const listChannelsResponseMetricsAutomationMissingDefault = false;
+export const listChannelsResponseIsSwitchedOffDefault = false;
+
+export const listChannelsResponseItem = zod.object({
+  "key": zod.guid(),
+  "name": zod.string(),
+  "network": zod.string(),
+  "networkName": zod.string(),
+  "isEnabled": zod.boolean(),
+  "sortOrder": zod.int(),
+  "automateConnectionId": zod.guid().nullable(),
+  "managedAutomationId": zod.guid().nullable(),
+  "options": zod.record(zod.string(), zod.string()),
+  "limits": zod.object({
+  "maxCharacters": zod.int(),
+  "urlWeight": zod.int().nullable(),
+  "countsGraphemes": zod.boolean(),
+  "weightsWideCharacters": zod.boolean(),
+  "requiresImage": zod.boolean(),
+  "requiresLinkTitle": zod.boolean(),
+  "supportsAltText": zod.boolean(),
+  "link": zod.string(),
+  "linkOrImage": zod.boolean(),
+  "imageWidth": zod.int(),
+  "imageHeight": zod.int(),
+  "options": zod.array(zod.string()),
+  "firstCommentMax": zod.int(),
+  "contentWarningCounts": zod.boolean(),
+  "maxThreadParts": zod.int(),
+  "altTextMax": zod.int(),
+  "countsEmojiBytes": zod.boolean(),
+  "titleMax": zod.int(),
+  "callsToAction": zod.array(zod.string()),
+  "buttonFromTextLink": zod.boolean(),
+  "imageCropOptional": zod.boolean().optional()
+}),
+  "isPaused": zod.boolean(),
+  "metricsAutomationMissing": zod.boolean().optional(),
+  "isSwitchedOff": zod.boolean().optional()
+})
+export const listChannelsResponse = zod.array(listChannelsResponseItem)
+
+
 export const createChannelBody = zod.object({
   "network": zod.string(),
   "name": zod.string(),
@@ -284,56 +331,13 @@ export const createChannelResponse = zod.object({
 })
 
 
-export const listChannelsResponseItem = zod.object({
-  "key": zod.guid(),
-  "name": zod.string(),
-  "network": zod.string(),
-  "networkName": zod.string(),
-  "isEnabled": zod.boolean(),
-  "sortOrder": zod.int(),
-  "automateConnectionId": zod.guid(),
-  "managedAutomationId": zod.guid().nullish(),
-  "options": zod.record(zod.string(), zod.string()),
-  "limits": zod.object({
-  "maxCharacters": zod.int(),
-  "urlWeight": zod.int().nullish(),
-  "countsGraphemes": zod.boolean(),
-  "weightsWideCharacters": zod.boolean(),
-  "requiresImage": zod.boolean(),
-  "requiresLinkTitle": zod.boolean(),
-  "supportsAltText": zod.boolean(),
-  "link": zod.string(),
-  "linkOrImage": zod.boolean(),
-  "imageWidth": zod.int(),
-  "imageHeight": zod.int(),
-  "options": zod.array(zod.string()),
-  "firstCommentMax": zod.int(),
-  "contentWarningCounts": zod.boolean(),
-  "maxThreadParts": zod.int(),
-  "altTextMax": zod.int(),
-  "countsEmojiBytes": zod.boolean(),
-  "titleMax": zod.int(),
-  "callsToAction": zod.array(zod.string())
-}),
-  "isPaused": zod.boolean(),
-  "metricsAutomationMissing": zod.boolean()
-})
-export const listChannelsResponse = zod.array(listChannelsResponseItem)
-
-
-export const deleteChannelParams = zod.object({
-  "key": zod.guid()
-})
-
-export const deleteChannelResponse = zod.object({
-  "key": zod.guid(),
-  "warnings": zod.array(zod.string())
-})
-
-
 export const getChannelParams = zod.object({
   "key": zod.guid()
 })
+
+export const getChannelResponseLimitsImageCropOptionalDefault = false;
+export const getChannelResponseMetricsAutomationMissingDefault = false;
+export const getChannelResponseIsSwitchedOffDefault = false;
 
 export const getChannelResponse = zod.object({
   "key": zod.guid(),
@@ -342,12 +346,12 @@ export const getChannelResponse = zod.object({
   "networkName": zod.string(),
   "isEnabled": zod.boolean(),
   "sortOrder": zod.int(),
-  "automateConnectionId": zod.guid(),
-  "managedAutomationId": zod.guid().nullish(),
+  "automateConnectionId": zod.guid().nullable(),
+  "managedAutomationId": zod.guid().nullable(),
   "options": zod.record(zod.string(), zod.string()),
   "limits": zod.object({
   "maxCharacters": zod.int(),
-  "urlWeight": zod.int().nullish(),
+  "urlWeight": zod.int().nullable(),
   "countsGraphemes": zod.boolean(),
   "weightsWideCharacters": zod.boolean(),
   "requiresImage": zod.boolean(),
@@ -364,10 +368,13 @@ export const getChannelResponse = zod.object({
   "altTextMax": zod.int(),
   "countsEmojiBytes": zod.boolean(),
   "titleMax": zod.int(),
-  "callsToAction": zod.array(zod.string())
+  "callsToAction": zod.array(zod.string()),
+  "buttonFromTextLink": zod.boolean(),
+  "imageCropOptional": zod.boolean().optional()
 }),
   "isPaused": zod.boolean(),
-  "metricsAutomationMissing": zod.boolean()
+  "metricsAutomationMissing": zod.boolean().optional(),
+  "isSwitchedOff": zod.boolean().optional()
 })
 
 
@@ -376,12 +383,23 @@ export const updateChannelParams = zod.object({
 })
 
 export const updateChannelBody = zod.object({
+  "automateConnectionId": zod.guid().nullish(),
   "name": zod.string(),
   "isEnabled": zod.boolean(),
   "options": zod.record(zod.string(), zod.string())
 })
 
 export const updateChannelResponse = zod.object({
+  "key": zod.guid(),
+  "warnings": zod.array(zod.string())
+})
+
+
+export const deleteChannelParams = zod.object({
+  "key": zod.guid()
+})
+
+export const deleteChannelResponse = zod.object({
   "key": zod.guid(),
   "warnings": zod.array(zod.string())
 })
@@ -403,7 +421,17 @@ export const testChannelConnectionParams = zod.object({
 
 export const testChannelConnectionResponse = zod.object({
   "ok": zod.boolean(),
-  "message": zod.string().nullish()
+  "message": zod.string().nullable()
+})
+
+
+export const switchOnChannelParams = zod.object({
+  "key": zod.guid()
+})
+
+export const switchOnChannelResponse = zod.object({
+  "key": zod.guid(),
+  "warnings": zod.array(zod.string())
 })
 
 
@@ -418,13 +446,15 @@ export const listConnectionOptionsResponseItem = zod.object({
 export const listConnectionOptionsResponse = zod.array(listConnectionOptionsResponseItem)
 
 
+export const listNetworksResponseLimitsImageCropOptionalDefault = false;
+
 export const listNetworksResponseItem = zod.object({
   "network": zod.string(),
   "displayName": zod.string(),
   "connectionTypeAlias": zod.string(),
   "limits": zod.object({
   "maxCharacters": zod.int(),
-  "urlWeight": zod.int().nullish(),
+  "urlWeight": zod.int().nullable(),
   "countsGraphemes": zod.boolean(),
   "weightsWideCharacters": zod.boolean(),
   "requiresImage": zod.boolean(),
@@ -441,10 +471,27 @@ export const listNetworksResponseItem = zod.object({
   "altTextMax": zod.int(),
   "countsEmojiBytes": zod.boolean(),
   "titleMax": zod.int(),
-  "callsToAction": zod.array(zod.string())
+  "callsToAction": zod.array(zod.string()),
+  "buttonFromTextLink": zod.boolean(),
+  "imageCropOptional": zod.boolean().optional()
 })
 })
 export const listNetworksResponse = zod.array(listNetworksResponseItem)
+
+
+export const listOptionChoicesQueryParams = zod.object({
+  "network": zod.string().optional(),
+  "connectionId": zod.guid().optional(),
+  "option": zod.string().optional()
+})
+
+export const listOptionChoicesResponse = zod.object({
+  "choices": zod.array(zod.object({
+  "id": zod.string(),
+  "name": zod.string()
+})),
+  "message": zod.string().nullable()
+})
 
 
 export const shareContentParams = zod.object({
@@ -458,20 +505,31 @@ export const shareContentQueryParams = zod.object({
 export const shareContentResponse = zod.object({
   "contentKey": zod.guid(),
   "documentTypeKey": zod.guid(),
-  "culture": zod.string().nullish(),
+  "culture": zod.string().nullable(),
   "cultures": zod.array(zod.string()),
   "name": zod.string(),
   "url": zod.string(),
   "live": zod.boolean(),
-  "description": zod.string().nullish(),
-  "mediaKey": zod.guid().nullish(),
-  "campaign": zod.union([zod.object({
+  "description": zod.string().nullable(),
+  "mediaKey": zod.guid().nullable(),
+  "campaign": zod.union([zod.null(),zod.object({
   "key": zod.guid(),
   "name": zod.string(),
   "value": zod.string()
-}),zod.null()]).optional(),
-  "plannedUtc": zod.iso.datetime({"local":true,"offset":true}).nullish()
+})]),
+  "plannedUtc": zod.iso.datetime({"local":true,"offset":true}).nullable()
 })
+
+
+export const listContentAutomationsResponseItem = zod.object({
+  "automationId": zod.guid(),
+  "documentTypeKey": zod.guid(),
+  "documentTypeName": zod.string().nullish(),
+  "name": zod.string(),
+  "enabled": zod.boolean(),
+  "workspaceName": zod.string().nullish()
+})
+export const listContentAutomationsResponse = zod.array(listContentAutomationsResponseItem)
 
 
 export const createContentAutomationBody = zod.object({
@@ -486,17 +544,6 @@ export const createContentAutomationResponse = zod.object({
   "automationId": zod.guid(),
   "workspaceName": zod.string().nullish()
 })
-
-
-export const listContentAutomationsResponseItem = zod.object({
-  "automationId": zod.guid(),
-  "documentTypeKey": zod.guid(),
-  "documentTypeName": zod.string().nullish(),
-  "name": zod.string(),
-  "enabled": zod.boolean(),
-  "workspaceName": zod.string().nullish()
-})
-export const listContentAutomationsResponse = zod.array(listContentAutomationsResponseItem)
 
 
 export const getPageAutoPostParams = zod.object({
@@ -527,24 +574,9 @@ export const setPageAutoPostResponse = zod.object({
 
 export const getEditionResponse = zod.object({
   "isLicensed": zod.boolean(),
-  "maxChannels": zod.int().nullish(),
-  "historyDays": zod.int().nullish(),
+  "maxChannels": zod.int().nullable(),
+  "historyDays": zod.int().nullable(),
   "channelsUsed": zod.int()
-})
-
-
-export const createHashtagGroupBody = zod.object({
-  "name": zod.string().nullish(),
-  "tags": zod.array(zod.string()).nullish()
-})
-
-export const createHashtagGroupResponse = zod.object({
-  "key": zod.guid(),
-  "name": zod.string(),
-  "tags": zod.array(zod.string()),
-  "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "updatedUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "usageCount": zod.int()
 })
 
 
@@ -570,11 +602,19 @@ export const listHashtagGroupsResponse = zod.object({
 })
 
 
-export const deleteHashtagGroupParams = zod.object({
-  "key": zod.guid()
+export const createHashtagGroupBody = zod.object({
+  "name": zod.string().nullish(),
+  "tags": zod.array(zod.string()).nullish()
 })
 
-export const deleteHashtagGroupResponse = zod.unknown()
+export const createHashtagGroupResponse = zod.object({
+  "key": zod.guid(),
+  "name": zod.string(),
+  "tags": zod.array(zod.string()),
+  "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
+  "updatedUtc": zod.iso.datetime({"local":true,"offset":true}),
+  "usageCount": zod.int()
+})
 
 
 export const getHashtagGroupParams = zod.object({
@@ -608,6 +648,13 @@ export const updateHashtagGroupResponse = zod.object({
   "updatedUtc": zod.iso.datetime({"local":true,"offset":true}),
   "usageCount": zod.int()
 })
+
+
+export const deleteHashtagGroupParams = zod.object({
+  "key": zod.guid()
+})
+
+export const deleteHashtagGroupResponse = zod.unknown()
 
 
 export const countHashtagGroupUseParams = zod.object({
@@ -654,13 +701,14 @@ export const pageLinkResponse = zod.object({
 
 
 export const previewLinkQueryParams = zod.object({
-  "url": zod.string().optional()
+  "url": zod.string().optional(),
+  "refresh": zod.coerce.boolean().optional()
 })
 
 export const previewLinkResponse = zod.object({
-  "title": zod.string().nullish(),
-  "description": zod.string().nullish(),
-  "imageUrl": zod.string().nullish()
+  "title": zod.string().nullable(),
+  "description": zod.string().nullable(),
+  "imageUrl": zod.string().nullable()
 })
 
 
@@ -840,22 +888,22 @@ export const previewUtmBody = zod.object({
 export const previewUtmResponseItem = zod.object({
   "channelKey": zod.guid(),
   "url": zod.string(),
-  "reason": zod.string().nullish(),
-  "source": zod.string().nullish(),
-  "medium": zod.string().nullish(),
-  "campaign": zod.string().nullish(),
-  "content": zod.string().nullish()
+  "reason": zod.string().nullable(),
+  "source": zod.string().nullable(),
+  "medium": zod.string().nullable(),
+  "campaign": zod.string().nullable(),
+  "content": zod.string().nullable()
 })
 export const previewUtmResponse = zod.array(previewUtmResponseItem)
 
 
 export const previewImageBody = zod.object({
   "mediaKey": zod.guid(),
-  "imageFraming": zod.union([zod.object({
-  "focalPoint": zod.union([zod.object({
+  "imageFraming": zod.union([zod.null(),zod.object({
+  "focalPoint": zod.union([zod.null(),zod.object({
   "left": zod.number(),
   "top": zod.number()
-}),zod.null()]).optional(),
+})]),
   "crops": zod.array(zod.object({
   "network": zod.string(),
   "left": zod.number(),
@@ -863,14 +911,14 @@ export const previewImageBody = zod.object({
   "right": zod.number(),
   "bottom": zod.number()
 }))
-}),zod.null()]).optional(),
+})]).optional(),
   "networks": zod.array(zod.string())
 })
 
 export const previewImageResponse = zod.object({
   "previews": zod.array(zod.object({
   "network": zod.string(),
-  "url": zod.string().nullish()
+  "url": zod.string().nullable()
 }))
 })
 
@@ -886,9 +934,9 @@ export const readMetricsResponseItem = zod.object({
   "channelKey": zod.guid(),
   "network": zod.string(),
   "state": zod.string(),
-  "reason": zod.string().nullish(),
+  "reason": zod.string().nullable(),
   "values": zod.record(zod.string(), zod.number()),
-  "fetchedUtc": zod.iso.datetime({"local":true,"offset":true}).nullish()
+  "fetchedUtc": zod.iso.datetime({"local":true,"offset":true}).nullable()
 }))
 })
 export const readMetricsResponse = zod.array(readMetricsResponseItem)
@@ -905,18 +953,36 @@ export const getMetricsTrendResponseItem = zod.object({
 export const getMetricsTrendResponse = zod.array(getMetricsTrendResponseItem)
 
 
-export const createPostBody = zod.object({
+export const listPostsQueryParams = zod.object({
+  "fromUtc": zod.iso.datetime({"local":true,"offset":true}).optional(),
+  "toUtc": zod.iso.datetime({"local":true,"offset":true}).optional(),
+  "status": zod.union([zod.literal('Draft'),zod.literal('AwaitingApproval'),zod.literal('Scheduled'),zod.literal('Publishing'),zod.literal('Published'),zod.literal('PartlyFailed'),zod.literal('Failed'),zod.literal('Paused'),zod.literal('WaitingForPage'),zod.literal(null)]).optional(),
+  "channel": zod.guid().optional(),
+  "newestFirst": zod.coerce.boolean().optional(),
+  "campaign": zod.guid().optional(),
+  "plannedFromUtc": zod.iso.datetime({"local":true,"offset":true}).optional(),
+  "plannedToUtc": zod.iso.datetime({"local":true,"offset":true}).optional(),
+  "unplanned": zod.coerce.boolean().optional(),
+  "history": zod.coerce.boolean().optional(),
+  "filters": zod.record(zod.string(), zod.string()).optional()
+})
+
+export const listPostsResponseTargetsItemRetryCountDefault = 0;
+
+export const listPostsResponseItem = zod.object({
+  "key": zod.guid(),
   "text": zod.string(),
-  "linkUrl": zod.string().nullish(),
-  "linkTitle": zod.string().nullish(),
-  "linkDescription": zod.string().nullish(),
-  "mediaKey": zod.guid().nullish(),
-  "imageAltText": zod.string().nullish(),
-  "imageFraming": zod.union([zod.object({
-  "focalPoint": zod.union([zod.object({
+  "linkUrl": zod.string().nullable(),
+  "linkTitle": zod.string().nullable(),
+  "linkDescription": zod.string().nullable(),
+  "linkImageUrl": zod.string().nullable(),
+  "mediaKey": zod.guid().nullable(),
+  "imageAltText": zod.string().nullable(),
+  "imageFraming": zod.union([zod.null(),zod.object({
+  "focalPoint": zod.union([zod.null(),zod.object({
   "left": zod.number(),
   "top": zod.number()
-}),zod.null()]).optional(),
+})]),
   "crops": zod.array(zod.object({
   "network": zod.string(),
   "left": zod.number(),
@@ -924,7 +990,90 @@ export const createPostBody = zod.object({
   "right": zod.number(),
   "bottom": zod.number()
 }))
-}),zod.null()]).optional(),
+})]),
+  "status": zod.string(),
+  "origin": zod.string(),
+  "createdByUserKey": zod.guid().nullable(),
+  "scheduledForUtc": zod.iso.datetime({"local":true,"offset":true}).nullable(),
+  "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
+  "updatedUtc": zod.iso.datetime({"local":true,"offset":true}),
+  "publishedUtc": zod.iso.datetime({"local":true,"offset":true}).nullable(),
+  "targets": zod.array(zod.object({
+  "id": zod.int(),
+  "channelKey": zod.guid(),
+  "channelName": zod.string(),
+  "network": zod.string(),
+  "textOverride": zod.string().nullable(),
+  "status": zod.string(),
+  "attempt": zod.int(),
+  "postUrl": zod.string().nullable(),
+  "error": zod.string().nullable(),
+  "dispatchedUtc": zod.iso.datetime({"local":true,"offset":true}).nullable(),
+  "completedUtc": zod.iso.datetime({"local":true,"offset":true}).nullable(),
+  "automateRunId": zod.guid().nullable(),
+  "options": zod.union([zod.null(),zod.object({
+  "firstComment": zod.string().nullish(),
+  "contentWarning": zod.string().nullish(),
+  "threadParts": zod.array(zod.string()).nullish(),
+  "pinTitle": zod.string().nullish(),
+  "callToAction": zod.string().nullish()
+})]),
+  "warning": zod.string().nullable(),
+  "partUrls": zod.array(zod.string()),
+  "failureKind": zod.string().nullish(),
+  "retryAtUtc": zod.iso.datetime({"local":true,"offset":true}).nullish(),
+  "retryCount": zod.int().optional()
+})),
+  "reviewNote": zod.string().nullable(),
+  "campaign": zod.union([zod.null(),zod.object({
+  "key": zod.guid(),
+  "name": zod.string(),
+  "value": zod.string()
+})]),
+  "version": zod.string(),
+  "links": zod.array(zod.object({
+  "url": zod.string(),
+  "contentKey": zod.guid(),
+  "culture": zod.string().nullish()
+})),
+  "page": zod.union([zod.null(),zod.object({
+  "contentKey": zod.guid().nullable(),
+  "culture": zod.string().nullable(),
+  "name": zod.string().nullable(),
+  "plannedUtc": zod.iso.datetime({"local":true,"offset":true}).nullable(),
+  "wait": zod.string().nullable(),
+  "delayMinutes": zod.int().nullable(),
+  "timed": zod.boolean()
+})]).optional(),
+  "pageLinks": zod.array(zod.object({
+  "placeholder": zod.string(),
+  "url": zod.string().nullable(),
+  "name": zod.string().nullable()
+})).nullish()
+})
+export const listPostsResponse = zod.array(listPostsResponseItem)
+
+
+export const createPostBody = zod.object({
+  "text": zod.string(),
+  "linkUrl": zod.string().nullish(),
+  "linkTitle": zod.string().nullish(),
+  "linkDescription": zod.string().nullish(),
+  "mediaKey": zod.guid().nullish(),
+  "imageAltText": zod.string().nullish(),
+  "imageFraming": zod.union([zod.null(),zod.object({
+  "focalPoint": zod.union([zod.null(),zod.object({
+  "left": zod.number(),
+  "top": zod.number()
+})]),
+  "crops": zod.array(zod.object({
+  "network": zod.string(),
+  "left": zod.number(),
+  "top": zod.number(),
+  "right": zod.number(),
+  "bottom": zod.number()
+}))
+})]).optional(),
   "linkImageUrl": zod.string().nullish(),
   "campaignKey": zod.guid().nullish(),
   "links": zod.array(zod.object({
@@ -932,7 +1081,7 @@ export const createPostBody = zod.object({
   "contentKey": zod.guid(),
   "culture": zod.string().nullish()
 })).nullish(),
-  "channels": zod.record(zod.string(), zod.string().nullable()),
+  "channels": zod.record(zod.string(), zod.string()),
   "options": zod.record(zod.string(), zod.object({
   "firstComment": zod.string().nullish(),
   "contentWarning": zod.string().nullish(),
@@ -955,126 +1104,26 @@ export const createPostResponse = zod.object({
 })
 
 
-export const listPostsQueryParams = zod.object({
-  "fromUtc": zod.iso.datetime({"local":true,"offset":true}).optional(),
-  "toUtc": zod.iso.datetime({"local":true,"offset":true}).optional(),
-  "status": zod.enum(['Draft', 'AwaitingApproval', 'Scheduled', 'Publishing', 'Published', 'PartlyFailed', 'Failed', 'Paused', 'WaitingForPage']).optional(),
-  "channel": zod.guid().optional(),
-  "newestFirst": zod.coerce.boolean().optional(),
-  "campaign": zod.guid().optional(),
-  "plannedFromUtc": zod.iso.datetime({"local":true,"offset":true}).optional(),
-  "plannedToUtc": zod.iso.datetime({"local":true,"offset":true}).optional(),
-  "unplanned": zod.coerce.boolean().optional(),
-  "filters": zod.record(zod.string(), zod.string()).optional()
-})
-
-export const listPostsResponseItem = zod.object({
-  "key": zod.guid(),
-  "text": zod.string(),
-  "linkUrl": zod.string().nullish(),
-  "linkTitle": zod.string().nullish(),
-  "linkDescription": zod.string().nullish(),
-  "linkImageUrl": zod.string().nullish(),
-  "mediaKey": zod.guid().nullish(),
-  "imageAltText": zod.string().nullish(),
-  "imageFraming": zod.union([zod.object({
-  "focalPoint": zod.union([zod.object({
-  "left": zod.number(),
-  "top": zod.number()
-}),zod.null()]).optional(),
-  "crops": zod.array(zod.object({
-  "network": zod.string(),
-  "left": zod.number(),
-  "top": zod.number(),
-  "right": zod.number(),
-  "bottom": zod.number()
-}))
-}),zod.null()]).optional(),
-  "status": zod.string(),
-  "origin": zod.string(),
-  "createdByUserKey": zod.guid().nullish(),
-  "scheduledForUtc": zod.iso.datetime({"local":true,"offset":true}).nullish(),
-  "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "updatedUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "publishedUtc": zod.iso.datetime({"local":true,"offset":true}).nullish(),
-  "targets": zod.array(zod.object({
-  "id": zod.int(),
-  "channelKey": zod.guid(),
-  "channelName": zod.string(),
-  "network": zod.string(),
-  "textOverride": zod.string().nullish(),
-  "status": zod.string(),
-  "attempt": zod.int(),
-  "postUrl": zod.string().nullish(),
-  "error": zod.string().nullish(),
-  "dispatchedUtc": zod.iso.datetime({"local":true,"offset":true}).nullish(),
-  "completedUtc": zod.iso.datetime({"local":true,"offset":true}).nullish(),
-  "automateRunId": zod.guid().nullish(),
-  "options": zod.union([zod.object({
-  "firstComment": zod.string().nullish(),
-  "contentWarning": zod.string().nullish(),
-  "threadParts": zod.array(zod.string()).nullish(),
-  "pinTitle": zod.string().nullish(),
-  "callToAction": zod.string().nullish()
-}),zod.null()]).optional(),
-  "warning": zod.string().nullish(),
-  "partUrls": zod.array(zod.string())
-})),
-  "reviewNote": zod.string().nullish(),
-  "campaign": zod.union([zod.object({
-  "key": zod.guid(),
-  "name": zod.string(),
-  "value": zod.string()
-}),zod.null()]).optional(),
-  "version": zod.string(),
-  "links": zod.array(zod.object({
-  "url": zod.string(),
-  "contentKey": zod.guid(),
-  "culture": zod.string().nullish()
-})),
-  "page": zod.union([zod.object({
-  "contentKey": zod.guid().nullish(),
-  "culture": zod.string().nullish(),
-  "name": zod.string().nullish(),
-  "plannedUtc": zod.iso.datetime({"local":true,"offset":true}).nullish(),
-  "wait": zod.string().nullish(),
-  "delayMinutes": zod.int().nullish(),
-  "timed": zod.boolean()
-}),zod.null()]).optional(),
-  "pageLinks": zod.array(zod.object({
-  "placeholder": zod.string(),
-  "url": zod.string().nullish(),
-  "name": zod.string().nullish()
-})).nullish()
-})
-export const listPostsResponse = zod.array(listPostsResponseItem)
-
-
-export const deletePostParams = zod.object({
-  "key": zod.guid()
-})
-
-export const deletePostResponse = zod.unknown()
-
-
 export const getPostParams = zod.object({
   "key": zod.guid()
 })
 
+export const getPostResponseTargetsItemRetryCountDefault = 0;
+
 export const getPostResponse = zod.object({
   "key": zod.guid(),
   "text": zod.string(),
-  "linkUrl": zod.string().nullish(),
-  "linkTitle": zod.string().nullish(),
-  "linkDescription": zod.string().nullish(),
-  "linkImageUrl": zod.string().nullish(),
-  "mediaKey": zod.guid().nullish(),
-  "imageAltText": zod.string().nullish(),
-  "imageFraming": zod.union([zod.object({
-  "focalPoint": zod.union([zod.object({
+  "linkUrl": zod.string().nullable(),
+  "linkTitle": zod.string().nullable(),
+  "linkDescription": zod.string().nullable(),
+  "linkImageUrl": zod.string().nullable(),
+  "mediaKey": zod.guid().nullable(),
+  "imageAltText": zod.string().nullable(),
+  "imageFraming": zod.union([zod.null(),zod.object({
+  "focalPoint": zod.union([zod.null(),zod.object({
   "left": zod.number(),
   "top": zod.number()
-}),zod.null()]).optional(),
+})]),
   "crops": zod.array(zod.object({
   "network": zod.string(),
   "left": zod.number(),
@@ -1082,62 +1131,65 @@ export const getPostResponse = zod.object({
   "right": zod.number(),
   "bottom": zod.number()
 }))
-}),zod.null()]).optional(),
+})]),
   "status": zod.string(),
   "origin": zod.string(),
-  "createdByUserKey": zod.guid().nullish(),
-  "scheduledForUtc": zod.iso.datetime({"local":true,"offset":true}).nullish(),
+  "createdByUserKey": zod.guid().nullable(),
+  "scheduledForUtc": zod.iso.datetime({"local":true,"offset":true}).nullable(),
   "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
   "updatedUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "publishedUtc": zod.iso.datetime({"local":true,"offset":true}).nullish(),
+  "publishedUtc": zod.iso.datetime({"local":true,"offset":true}).nullable(),
   "targets": zod.array(zod.object({
   "id": zod.int(),
   "channelKey": zod.guid(),
   "channelName": zod.string(),
   "network": zod.string(),
-  "textOverride": zod.string().nullish(),
+  "textOverride": zod.string().nullable(),
   "status": zod.string(),
   "attempt": zod.int(),
-  "postUrl": zod.string().nullish(),
-  "error": zod.string().nullish(),
-  "dispatchedUtc": zod.iso.datetime({"local":true,"offset":true}).nullish(),
-  "completedUtc": zod.iso.datetime({"local":true,"offset":true}).nullish(),
-  "automateRunId": zod.guid().nullish(),
-  "options": zod.union([zod.object({
+  "postUrl": zod.string().nullable(),
+  "error": zod.string().nullable(),
+  "dispatchedUtc": zod.iso.datetime({"local":true,"offset":true}).nullable(),
+  "completedUtc": zod.iso.datetime({"local":true,"offset":true}).nullable(),
+  "automateRunId": zod.guid().nullable(),
+  "options": zod.union([zod.null(),zod.object({
   "firstComment": zod.string().nullish(),
   "contentWarning": zod.string().nullish(),
   "threadParts": zod.array(zod.string()).nullish(),
   "pinTitle": zod.string().nullish(),
   "callToAction": zod.string().nullish()
-}),zod.null()]).optional(),
-  "warning": zod.string().nullish(),
-  "partUrls": zod.array(zod.string())
+})]),
+  "warning": zod.string().nullable(),
+  "partUrls": zod.array(zod.string()),
+  "failureKind": zod.string().nullish(),
+  "retryAtUtc": zod.iso.datetime({"local":true,"offset":true}).nullish(),
+  "retryCount": zod.int().optional()
 })),
-  "reviewNote": zod.string().nullish(),
-  "campaign": zod.union([zod.object({
+  "reviewNote": zod.string().nullable(),
+  "campaign": zod.union([zod.null(),zod.object({
   "key": zod.guid(),
   "name": zod.string(),
   "value": zod.string()
-}),zod.null()]).optional(),
+})]),
   "version": zod.string(),
   "links": zod.array(zod.object({
   "url": zod.string(),
   "contentKey": zod.guid(),
   "culture": zod.string().nullish()
 })),
-  "page": zod.union([zod.object({
-  "contentKey": zod.guid().nullish(),
-  "culture": zod.string().nullish(),
-  "name": zod.string().nullish(),
-  "plannedUtc": zod.iso.datetime({"local":true,"offset":true}).nullish(),
-  "wait": zod.string().nullish(),
-  "delayMinutes": zod.int().nullish(),
+  "page": zod.union([zod.null(),zod.object({
+  "contentKey": zod.guid().nullable(),
+  "culture": zod.string().nullable(),
+  "name": zod.string().nullable(),
+  "plannedUtc": zod.iso.datetime({"local":true,"offset":true}).nullable(),
+  "wait": zod.string().nullable(),
+  "delayMinutes": zod.int().nullable(),
   "timed": zod.boolean()
-}),zod.null()]).optional(),
+})]).optional(),
   "pageLinks": zod.array(zod.object({
   "placeholder": zod.string(),
-  "url": zod.string().nullish(),
-  "name": zod.string().nullish()
+  "url": zod.string().nullable(),
+  "name": zod.string().nullable()
 })).nullish()
 })
 
@@ -1153,11 +1205,11 @@ export const updatePostBody = zod.object({
   "linkDescription": zod.string().nullish(),
   "mediaKey": zod.guid().nullish(),
   "imageAltText": zod.string().nullish(),
-  "imageFraming": zod.union([zod.object({
-  "focalPoint": zod.union([zod.object({
+  "imageFraming": zod.union([zod.null(),zod.object({
+  "focalPoint": zod.union([zod.null(),zod.object({
   "left": zod.number(),
   "top": zod.number()
-}),zod.null()]).optional(),
+})]),
   "crops": zod.array(zod.object({
   "network": zod.string(),
   "left": zod.number(),
@@ -1165,7 +1217,7 @@ export const updatePostBody = zod.object({
   "right": zod.number(),
   "bottom": zod.number()
 }))
-}),zod.null()]).optional(),
+})]).optional(),
   "linkImageUrl": zod.string().nullish(),
   "campaignKey": zod.guid().nullish(),
   "links": zod.array(zod.object({
@@ -1173,7 +1225,7 @@ export const updatePostBody = zod.object({
   "contentKey": zod.guid(),
   "culture": zod.string().nullish()
 })).nullish(),
-  "channels": zod.record(zod.string(), zod.string().nullable()),
+  "channels": zod.record(zod.string(), zod.string()),
   "options": zod.record(zod.string(), zod.object({
   "firstComment": zod.string().nullish(),
   "contentWarning": zod.string().nullish(),
@@ -1196,6 +1248,13 @@ export const updatePostResponse = zod.object({
 })
 
 
+export const deletePostParams = zod.object({
+  "key": zod.guid()
+})
+
+export const deletePostResponse = zod.unknown()
+
+
 export const getHistoryParams = zod.object({
   "key": zod.guid()
 })
@@ -1211,10 +1270,10 @@ export const getHistoryQueryParams = zod.object({
 export const getHistoryResponse = zod.object({
   "total": zod.int(),
   "items": zod.array(zod.object({
-  "userKey": zod.guid().nullish(),
+  "userKey": zod.guid().nullable(),
   "timestampUtc": zod.iso.datetime({"local":true,"offset":true}),
   "action": zod.string(),
-  "comment": zod.string().nullish(),
+  "comment": zod.string().nullable(),
   "isSystem": zod.boolean()
 }))
 })
@@ -1241,11 +1300,11 @@ export const checkPostBody = zod.object({
   "linkDescription": zod.string().nullish(),
   "mediaKey": zod.guid().nullish(),
   "imageAltText": zod.string().nullish(),
-  "imageFraming": zod.union([zod.object({
-  "focalPoint": zod.union([zod.object({
+  "imageFraming": zod.union([zod.null(),zod.object({
+  "focalPoint": zod.union([zod.null(),zod.object({
   "left": zod.number(),
   "top": zod.number()
-}),zod.null()]).optional(),
+})]),
   "crops": zod.array(zod.object({
   "network": zod.string(),
   "left": zod.number(),
@@ -1253,7 +1312,7 @@ export const checkPostBody = zod.object({
   "right": zod.number(),
   "bottom": zod.number()
 }))
-}),zod.null()]).optional(),
+})]).optional(),
   "linkImageUrl": zod.string().nullish(),
   "campaignKey": zod.guid().nullish(),
   "links": zod.array(zod.object({
@@ -1261,7 +1320,7 @@ export const checkPostBody = zod.object({
   "contentKey": zod.guid(),
   "culture": zod.string().nullish()
 })).nullish(),
-  "channels": zod.record(zod.string(), zod.string().nullable()),
+  "channels": zod.record(zod.string(), zod.string()),
   "options": zod.record(zod.string(), zod.object({
   "firstComment": zod.string().nullish(),
   "contentWarning": zod.string().nullish(),
@@ -1293,11 +1352,11 @@ export const checkPostResponse = zod.object({
   "max": zod.int(),
   "previewText": zod.string()
 })),
-  "comment": zod.union([zod.object({
+  "comment": zod.union([zod.null(),zod.object({
   "count": zod.int(),
   "max": zod.int(),
   "previewText": zod.string()
-}),zod.null()]).optional()
+})])
 }))
 })
 
@@ -1305,12 +1364,13 @@ export const checkPostResponse = zod.object({
 export const countPostsQueryParams = zod.object({
   "fromUtc": zod.iso.datetime({"local":true,"offset":true}).optional(),
   "toUtc": zod.iso.datetime({"local":true,"offset":true}).optional(),
-  "status": zod.enum(['Draft', 'AwaitingApproval', 'Scheduled', 'Publishing', 'Published', 'PartlyFailed', 'Failed', 'Paused', 'WaitingForPage']).optional(),
+  "status": zod.union([zod.literal('Draft'),zod.literal('AwaitingApproval'),zod.literal('Scheduled'),zod.literal('Publishing'),zod.literal('Published'),zod.literal('PartlyFailed'),zod.literal('Failed'),zod.literal('Paused'),zod.literal('WaitingForPage'),zod.literal(null)]).optional(),
   "channel": zod.guid().optional(),
   "campaign": zod.guid().optional(),
   "plannedFromUtc": zod.iso.datetime({"local":true,"offset":true}).optional(),
   "plannedToUtc": zod.iso.datetime({"local":true,"offset":true}).optional(),
   "unplanned": zod.coerce.boolean().optional(),
+  "history": zod.coerce.boolean().optional(),
   "filters": zod.record(zod.string(), zod.string()).optional()
 })
 
@@ -1341,7 +1401,7 @@ export const updateScheduleResponse = zod.unknown()
 
 
 export const getNextFreeSlotResponse = zod.object({
-  "utc": zod.iso.datetime({"local":true,"offset":true}).nullish()
+  "utc": zod.iso.datetime({"local":true,"offset":true}).nullable()
 })
 
 
@@ -1381,18 +1441,11 @@ export const updateSettingsResponse = zod.unknown()
 
 export const listContentMappingsResponseItem = zod.object({
   "documentTypeKey": zod.guid(),
-  "descriptionAlias": zod.string().nullish(),
-  "imageAlias": zod.string().nullish(),
-  "campaignKey": zod.guid().nullish()
+  "descriptionAlias": zod.string().nullable(),
+  "imageAlias": zod.string().nullable(),
+  "campaignKey": zod.guid().nullable()
 })
 export const listContentMappingsResponse = zod.array(listContentMappingsResponseItem)
-
-
-export const removeContentMappingParams = zod.object({
-  "documentTypeKey": zod.guid()
-})
-
-export const removeContentMappingResponse = zod.unknown()
 
 
 export const saveContentMappingParams = zod.object({
@@ -1408,6 +1461,13 @@ export const saveContentMappingBody = zod.object({
 export const saveContentMappingResponse = zod.unknown()
 
 
+export const removeContentMappingParams = zod.object({
+  "documentTypeKey": zod.guid()
+})
+
+export const removeContentMappingResponse = zod.unknown()
+
+
 export const getPostShortLinksParams = zod.object({
   "key": zod.guid()
 })
@@ -1416,8 +1476,8 @@ export const getPostShortLinksResponseItem = zod.object({
   "channelKey": zod.guid(),
   "code": zod.string(),
   "shortUrl": zod.string(),
-  "targetUrl": zod.string().nullish(),
-  "targetContentKey": zod.guid().nullish(),
+  "targetUrl": zod.string().nullable(),
+  "targetContentKey": zod.guid().nullable(),
   "clicks": zod.int()
 })
 export const getPostShortLinksResponse = zod.array(getPostShortLinksResponseItem)
@@ -1432,14 +1492,16 @@ export const getShortLinksQueryParams = zod.object({
   "filter": zod.string().optional()
 })
 
+export const getShortLinksResponseItemsItemCanOpenPostDefault = false;
+
 export const getShortLinksResponse = zod.object({
   "total": zod.int(),
   "items": zod.array(zod.object({
   "code": zod.string(),
   "shortUrl": zod.string(),
-  "targetUrl": zod.string().nullish(),
-  "targetContentKey": zod.guid().nullish(),
-  "targetName": zod.string().nullish(),
+  "targetUrl": zod.string().nullable(),
+  "targetContentKey": zod.guid().nullable(),
+  "targetName": zod.string().nullable(),
   "targetGone": zod.boolean(),
   "postKey": zod.guid(),
   "channelKey": zod.guid(),
@@ -1448,7 +1510,7 @@ export const getShortLinksResponse = zod.object({
   "clicks": zod.int(),
   "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
   "postText": zod.string().nullish(),
-  "canOpenPost": zod.boolean()
+  "canOpenPost": zod.boolean().optional()
 }))
 })
 
@@ -1512,20 +1574,6 @@ export const getPostsTagsResponseItem = zod.object({
 export const getPostsTagsResponse = zod.array(getPostsTagsResponseItem)
 
 
-export const createTagBody = zod.object({
-  "name": zod.string().nullish(),
-  "colour": zod.string().nullish()
-})
-
-export const createTagResponse = zod.object({
-  "key": zod.guid(),
-  "name": zod.string(),
-  "colour": zod.string(),
-  "postCount": zod.int(),
-  "updatedUtc": zod.iso.datetime({"local":true,"offset":true})
-})
-
-
 export const listTagsQuerySkipDefault = 0;
 export const listTagsQueryTakeDefault = 100;
 
@@ -1547,11 +1595,18 @@ export const listTagsResponse = zod.object({
 })
 
 
-export const deleteTagParams = zod.object({
-  "key": zod.guid()
+export const createTagBody = zod.object({
+  "name": zod.string().nullish(),
+  "colour": zod.string().nullish()
 })
 
-export const deleteTagResponse = zod.unknown()
+export const createTagResponse = zod.object({
+  "key": zod.guid(),
+  "name": zod.string(),
+  "colour": zod.string(),
+  "postCount": zod.int(),
+  "updatedUtc": zod.iso.datetime({"local":true,"offset":true})
+})
 
 
 export const getTagParams = zod.object({
@@ -1583,6 +1638,13 @@ export const updateTagResponse = zod.object({
   "postCount": zod.int(),
   "updatedUtc": zod.iso.datetime({"local":true,"offset":true})
 })
+
+
+export const deleteTagParams = zod.object({
+  "key": zod.guid()
+})
+
+export const deleteTagResponse = zod.unknown()
 
 
 export const getTagItemsQueryParams = zod.object({
@@ -1623,35 +1685,6 @@ export const retryTargetResponse = zod.object({
 })
 
 
-export const createTemplateBody = zod.object({
-  "name": zod.string().nullish(),
-  "text": zod.string().nullish(),
-  "linkUrl": zod.string().nullish(),
-  "campaignKey": zod.guid().nullish(),
-  "channelKeys": zod.array(zod.guid()).nullish(),
-  "documentTypeKeys": zod.array(zod.guid()).nullish(),
-  "postKey": zod.guid().nullish()
-})
-
-export const createTemplateResponse = zod.object({
-  "key": zod.guid(),
-  "name": zod.string(),
-  "text": zod.string(),
-  "linkUrl": zod.string().nullish(),
-  "campaign": zod.union([zod.object({
-  "key": zod.guid(),
-  "name": zod.string(),
-  "value": zod.string()
-}),zod.null()]).optional(),
-  "channelKeys": zod.array(zod.guid()),
-  "createdByUserKey": zod.guid(),
-  "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "updatedUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "fromAi": zod.boolean(),
-  "documentTypeKeys": zod.array(zod.guid())
-})
-
-
 export const listTemplatesQuerySkipDefault = 0;
 export const listTemplatesQueryTakeDefault = 100;
 
@@ -1662,54 +1695,82 @@ export const listTemplatesQueryParams = zod.object({
   "take": zod.coerce.number().int().default(listTemplatesQueryTakeDefault)
 })
 
+export const listTemplatesResponseItemsItemFromAiDefault = false;
+
 export const listTemplatesResponse = zod.object({
   "total": zod.int(),
   "items": zod.array(zod.object({
   "key": zod.guid(),
   "name": zod.string(),
   "text": zod.string(),
-  "linkUrl": zod.string().nullish(),
-  "campaign": zod.union([zod.object({
+  "linkUrl": zod.string().nullable(),
+  "campaign": zod.union([zod.null(),zod.object({
   "key": zod.guid(),
   "name": zod.string(),
   "value": zod.string()
-}),zod.null()]).optional(),
+})]),
   "channelKeys": zod.array(zod.guid()),
   "createdByUserKey": zod.guid(),
   "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
   "updatedUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "fromAi": zod.boolean(),
+  "fromAi": zod.boolean().optional(),
   "documentTypeKeys": zod.array(zod.guid())
 }))
 })
 
 
-export const deleteTemplateParams = zod.object({
-  "key": zod.guid()
+export const createTemplateBody = zod.object({
+  "name": zod.string().nullish(),
+  "text": zod.string().nullish(),
+  "linkUrl": zod.string().nullish(),
+  "campaignKey": zod.guid().nullish(),
+  "channelKeys": zod.array(zod.guid()).nullish(),
+  "documentTypeKeys": zod.array(zod.guid()).nullish(),
+  "postKey": zod.guid().nullish()
 })
 
-export const deleteTemplateResponse = zod.unknown()
+export const createTemplateResponseFromAiDefault = false;
+
+export const createTemplateResponse = zod.object({
+  "key": zod.guid(),
+  "name": zod.string(),
+  "text": zod.string(),
+  "linkUrl": zod.string().nullable(),
+  "campaign": zod.union([zod.null(),zod.object({
+  "key": zod.guid(),
+  "name": zod.string(),
+  "value": zod.string()
+})]),
+  "channelKeys": zod.array(zod.guid()),
+  "createdByUserKey": zod.guid(),
+  "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
+  "updatedUtc": zod.iso.datetime({"local":true,"offset":true}),
+  "fromAi": zod.boolean().optional(),
+  "documentTypeKeys": zod.array(zod.guid())
+})
 
 
 export const getTemplateParams = zod.object({
   "key": zod.guid()
 })
 
+export const getTemplateResponseFromAiDefault = false;
+
 export const getTemplateResponse = zod.object({
   "key": zod.guid(),
   "name": zod.string(),
   "text": zod.string(),
-  "linkUrl": zod.string().nullish(),
-  "campaign": zod.union([zod.object({
+  "linkUrl": zod.string().nullable(),
+  "campaign": zod.union([zod.null(),zod.object({
   "key": zod.guid(),
   "name": zod.string(),
   "value": zod.string()
-}),zod.null()]).optional(),
+})]),
   "channelKeys": zod.array(zod.guid()),
   "createdByUserKey": zod.guid(),
   "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
   "updatedUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "fromAi": zod.boolean(),
+  "fromAi": zod.boolean().optional(),
   "documentTypeKeys": zod.array(zod.guid())
 })
 
@@ -1728,44 +1789,55 @@ export const updateTemplateBody = zod.object({
   "postKey": zod.guid().nullish()
 })
 
+export const updateTemplateResponseFromAiDefault = false;
+
 export const updateTemplateResponse = zod.object({
   "key": zod.guid(),
   "name": zod.string(),
   "text": zod.string(),
-  "linkUrl": zod.string().nullish(),
-  "campaign": zod.union([zod.object({
+  "linkUrl": zod.string().nullable(),
+  "campaign": zod.union([zod.null(),zod.object({
   "key": zod.guid(),
   "name": zod.string(),
   "value": zod.string()
-}),zod.null()]).optional(),
+})]),
   "channelKeys": zod.array(zod.guid()),
   "createdByUserKey": zod.guid(),
   "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
   "updatedUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "fromAi": zod.boolean(),
+  "fromAi": zod.boolean().optional(),
   "documentTypeKeys": zod.array(zod.guid())
 })
+
+
+export const deleteTemplateParams = zod.object({
+  "key": zod.guid()
+})
+
+export const deleteTemplateResponse = zod.unknown()
 
 
 export const duplicateTemplateParams = zod.object({
   "key": zod.guid()
 })
 
+export const duplicateTemplateResponseFromAiDefault = false;
+
 export const duplicateTemplateResponse = zod.object({
   "key": zod.guid(),
   "name": zod.string(),
   "text": zod.string(),
-  "linkUrl": zod.string().nullish(),
-  "campaign": zod.union([zod.object({
+  "linkUrl": zod.string().nullable(),
+  "campaign": zod.union([zod.null(),zod.object({
   "key": zod.guid(),
   "name": zod.string(),
   "value": zod.string()
-}),zod.null()]).optional(),
+})]),
   "channelKeys": zod.array(zod.guid()),
   "createdByUserKey": zod.guid(),
   "createdUtc": zod.iso.datetime({"local":true,"offset":true}),
   "updatedUtc": zod.iso.datetime({"local":true,"offset":true}),
-  "fromAi": zod.boolean(),
+  "fromAi": zod.boolean().optional(),
   "documentTypeKeys": zod.array(zod.guid())
 })
 
@@ -1774,10 +1846,10 @@ export const createPostFromTemplateParams = zod.object({
   "key": zod.guid()
 })
 
-export const createPostFromTemplateBody = zod.object({
+export const createPostFromTemplateBody = zod.union([zod.null(),zod.object({
   "sourceContentKey": zod.guid().nullish(),
   "sourceCulture": zod.string().nullish()
-})
+})])
 
 export const createPostFromTemplateResponse = zod.object({
   "key": zod.guid(),

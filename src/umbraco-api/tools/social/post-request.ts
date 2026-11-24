@@ -8,7 +8,7 @@
  */
 
 import { UmbracoApiError } from "@umbraco-cms/mcp-server-sdk";
-import type { PostRequest, PostResponse, TargetOptions } from "../../api/generated/umbSocialApi.js";
+import type { PostRequest, PostRequestChannels, PostResponse, TargetOptions } from "../../api/generated/umbSocialApi.js";
 import { REFUSAL_HINTS } from "../../../session/refusals.js";
 import type { PostInputArgs } from "./post-input.js";
 
@@ -60,7 +60,7 @@ export function toPostRequest(post: PostResponse): PostRequest {
     campaignKey: post.campaign?.key ?? null,
     // The post's own links; `pageLinks` are the page placeholders the site fills in.
     links: post.links,
-    channels,
+    channels: channels as PostRequestChannels, // The API takes null (no text of its own); the 18 description leaves that out.
     options: Object.keys(options).length > 0 ? options : null,
     when: "Draft",
     atUtc: null,
@@ -101,7 +101,7 @@ export function applyChanges(base: PostRequest, input: PostInputArgs): PostReque
     if (!(key in channels)) refuse(CHANNEL_NOT_CHOSEN);
   }
   for (const [key, text] of Object.entries(input.channelTexts ?? {})) channels[key] = text ?? null;
-  next.channels = channels;
+  next.channels = channels as PostRequestChannels;
 
   const options: Record<string, TargetOptions> = {};
   for (const [key, value] of Object.entries(base.options ?? {})) {

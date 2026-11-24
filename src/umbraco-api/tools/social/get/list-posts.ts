@@ -33,7 +33,7 @@ const SERVER_CAP = 500;
 
 const PRO_REQUIRED = "licence.pro_required";
 
-const STATUSES = Object.values(PostStatus) as [PostStatus, ...PostStatus[]];
+const STATUSES = Object.values(PostStatus) as [NonNullable<PostStatus>, ...NonNullable<PostStatus>[]];
 
 const inputSchema = {
   fromUtc: z.iso
