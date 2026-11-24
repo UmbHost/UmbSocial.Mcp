@@ -29,7 +29,7 @@ export function aTarget(overrides: Partial<TargetResponse> = {}): TargetResponse
     warning: null,
     partUrls: [],
     ...overrides,
-  };
+  } as TargetResponse;
 }
 
 export function aPost(overrides: Partial<PostResponse> = {}): PostResponse {
@@ -52,7 +52,7 @@ export function aPost(overrides: Partial<PostResponse> = {}): PostResponse {
     page: null,
     pageLinks: null,
     ...overrides,
-  };
+  } as PostResponse;
 }
 
 /** `count` posts, each with text longer than an excerpt. */

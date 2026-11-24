@@ -8,6 +8,10 @@ import { customInstance } from '../client.js';
 export interface AiAltTextBody {
   postKey: string;
   mediaKey: string;
+  /** @nullable */
+  text?: string | null;
+  /** @nullable */
+  linkTitle?: string | null;
 }
 
 export interface AiContextOption {
@@ -45,6 +49,8 @@ export interface AiRewriteBody {
   postKey: string;
   channelKey: string;
   /** @nullable */
+  channelKeys?: string[] | null;
+  /** @nullable */
   text?: string | null;
   /** @nullable */
   instruction?: string | null;
@@ -52,9 +58,9 @@ export interface AiRewriteBody {
 
 export interface AiSettings {
   /** @nullable */
-  profileId?: string | null;
+  profileId: string | null;
   /** @nullable */
-  contextId?: string | null;
+  contextId: string | null;
   sourceHosts: string[];
 }
 
@@ -117,7 +123,7 @@ export interface CampaignResponse {
   posts: number;
   createdUtc: string;
   /** @nullable */
-  lastUsedUtc?: string | null;
+  lastUsedUtc: string | null;
 }
 
 export interface CampaignSuggestionResponse {
@@ -148,13 +154,13 @@ export interface ChannelCheckResponse {
   warnings: string[];
   previewText: string;
   parts: TextCheckResponse[];
-  comment?: TextCheckResponse | null;
+  comment: null | TextCheckResponse;
 }
 
 export interface ChannelLimitsResponse {
   maxCharacters: number;
   /** @nullable */
-  urlWeight?: number | null;
+  urlWeight: number | null;
   countsGraphemes: boolean;
   weightsWideCharacters: boolean;
   requiresImage: boolean;
@@ -172,6 +178,8 @@ export interface ChannelLimitsResponse {
   countsEmojiBytes: boolean;
   titleMax: number;
   callsToAction: string[];
+  buttonFromTextLink: boolean;
+  imageCropOptional: boolean;
 }
 
 export type ChannelRequestOptions = {[key: string]: string};
@@ -192,13 +200,15 @@ export interface ChannelResponse {
   networkName: string;
   isEnabled: boolean;
   sortOrder: number;
-  automateConnectionId: string;
   /** @nullable */
-  managedAutomationId?: string | null;
+  automateConnectionId: string | null;
+  /** @nullable */
+  managedAutomationId: string | null;
   options: ChannelResponseOptions;
   limits: ChannelLimitsResponse;
   isPaused: boolean;
   metricsAutomationMissing: boolean;
+  isSwitchedOff: boolean;
 }
 
 export interface ChannelSavedResponse {
@@ -235,6 +245,8 @@ export interface ChannelScheduleResponse {
 export type ChannelUpdateRequestOptions = {[key: string]: string};
 
 export interface ChannelUpdateRequest {
+  /** @nullable */
+  automateConnectionId?: string | null;
   name: string;
   isEnabled: boolean;
   options: ChannelUpdateRequestOptions;
@@ -257,7 +269,7 @@ export interface ConnectionOptionResponse {
 export interface ConnectionTestResponse {
   ok: boolean;
   /** @nullable */
-  message?: string | null;
+  message: string | null;
 }
 
 export interface ContentAutomationCreated {
@@ -308,29 +320,38 @@ export interface ContentMappingRequest {
 export interface ContentMappingResponse {
   documentTypeKey: string;
   /** @nullable */
-  descriptionAlias?: string | null;
+  descriptionAlias: string | null;
   /** @nullable */
-  imageAlias?: string | null;
+  imageAlias: string | null;
   /** @nullable */
-  campaignKey?: string | null;
+  campaignKey: string | null;
 }
 
 export interface ContentShareResponse {
   contentKey: string;
   documentTypeKey: string;
   /** @nullable */
-  culture?: string | null;
+  culture: string | null;
   cultures: string[];
   name: string;
   url: string;
   live: boolean;
   /** @nullable */
-  description?: string | null;
+  description: string | null;
   /** @nullable */
-  mediaKey?: string | null;
-  campaign?: CampaignReferenceResponse | null;
+  mediaKey: string | null;
+  campaign: null | CampaignReferenceResponse;
   /** @nullable */
-  plannedUtc?: string | null;
+  plannedUtc: string | null;
+}
+
+export interface EditionResponse {
+  isLicensed: boolean;
+  /** @nullable */
+  maxChannels: number | null;
+  /** @nullable */
+  historyDays: number | null;
+  channelsUsed: number;
 }
 
 export interface EditShortLinkRequest {
@@ -342,15 +363,6 @@ export interface EditShortLinkRequest {
   url?: string | null;
   /** @nullable */
   suffix?: string | null;
-}
-
-export interface EditionResponse {
-  isLicensed: boolean;
-  /** @nullable */
-  maxChannels?: number | null;
-  /** @nullable */
-  historyDays?: number | null;
-  channelsUsed: number;
 }
 
 export interface HashtagGroupRequest {
@@ -371,11 +383,11 @@ export interface HashtagGroupView {
 
 export interface HistoryEntryResponse {
   /** @nullable */
-  userKey?: string | null;
+  userKey: string | null;
   timestampUtc: string;
   action: string;
   /** @nullable */
-  comment?: string | null;
+  comment: string | null;
   isSystem: boolean;
 }
 
@@ -398,20 +410,20 @@ export interface ImageFocalPoint {
 }
 
 export interface ImageFraming {
-  focalPoint?: ImageFocalPoint | null;
+  focalPoint: null | ImageFocalPoint;
   crops: ImageCrop[];
 }
 
 export interface ImagePreviewRequest {
   mediaKey: string;
-  imageFraming?: ImageFraming | null;
+  imageFraming?: null | ImageFraming;
   networks: string[];
 }
 
 export interface ImagePreviewUrl {
   network: string;
   /** @nullable */
-  url?: string | null;
+  url: string | null;
 }
 
 export interface ImagePreviewResponse {
@@ -425,11 +437,11 @@ export interface LinkPageResponse {
 
 export interface LinkPreviewResponse {
   /** @nullable */
-  title?: string | null;
+  title: string | null;
   /** @nullable */
-  description?: string | null;
+  description: string | null;
   /** @nullable */
-  imageUrl?: string | null;
+  imageUrl: string | null;
 }
 
 export type LinkSettingsModelUtmSourceByNetwork = {[key: string]: string};
@@ -458,15 +470,15 @@ export interface MarkPublishedRequest {
   postUrl?: string | null;
 }
 
+export interface MetricsRequest {
+  postKeys: string[];
+}
+
 export type MetricTrendPointValues = {[key: string]: number};
 
 export interface MetricTrendPoint {
   takenUtc: string;
   values: MetricTrendPointValues;
-}
-
-export interface MetricsRequest {
-  postKeys: string[];
 }
 
 export interface NetworkResponse {
@@ -478,7 +490,18 @@ export interface NetworkResponse {
 
 export interface NextFreeSlotResponse {
   /** @nullable */
-  utc?: string | null;
+  utc: string | null;
+}
+
+export interface OptionChoiceResponse {
+  id: string;
+  name: string;
+}
+
+export interface OptionChoicesResponse {
+  choices: OptionChoiceResponse[];
+  /** @nullable */
+  message: string | null;
 }
 
 export interface PageAutoPostModel {
@@ -489,30 +512,6 @@ export interface PageAutoPostModel {
 
 export interface PageAutoPostRequest {
   optedOut: boolean;
-}
-
-export interface PagePlaceholderResponse {
-  placeholder: string;
-  /** @nullable */
-  url?: string | null;
-  /** @nullable */
-  name?: string | null;
-}
-
-export interface PageSourceResponse {
-  /** @nullable */
-  contentKey?: string | null;
-  /** @nullable */
-  culture?: string | null;
-  /** @nullable */
-  name?: string | null;
-  /** @nullable */
-  plannedUtc?: string | null;
-  /** @nullable */
-  wait?: string | null;
-  /** @nullable */
-  delayMinutes?: number | null;
-  timed: boolean;
 }
 
 export interface PagedCampaignResponseModel {
@@ -549,8 +548,8 @@ export interface PostTemplateView {
   name: string;
   text: string;
   /** @nullable */
-  linkUrl?: string | null;
-  campaign?: PostTemplateCampaign | null;
+  linkUrl: string | null;
+  campaign: null | PostTemplateCampaign;
   channelKeys: string[];
   createdByUserKey: string;
   createdUtc: string;
@@ -562,6 +561,30 @@ export interface PostTemplateView {
 export interface PagedPostTemplateViewModel {
   total: number;
   items: PostTemplateView[];
+}
+
+export interface PagePlaceholderResponse {
+  placeholder: string;
+  /** @nullable */
+  url: string | null;
+  /** @nullable */
+  name: string | null;
+}
+
+export interface PageSourceResponse {
+  /** @nullable */
+  contentKey: string | null;
+  /** @nullable */
+  culture: string | null;
+  /** @nullable */
+  name: string | null;
+  /** @nullable */
+  plannedUtc: string | null;
+  /** @nullable */
+  wait: string | null;
+  /** @nullable */
+  delayMinutes: number | null;
+  timed: boolean;
 }
 
 export type PostClicksChannels = {[key: string]: number};
@@ -607,10 +630,10 @@ export interface TargetMetricsResponse {
   network: string;
   state: string;
   /** @nullable */
-  reason?: string | null;
+  reason: string | null;
   values: TargetMetricsResponseValues;
   /** @nullable */
-  fetchedUtc?: string | null;
+  fetchedUtc: string | null;
 }
 
 export interface PostMetricsResponse {
@@ -618,7 +641,7 @@ export interface PostMetricsResponse {
   targets: TargetMetricsResponse[];
 }
 
-export type PostRequestChannels = {[key: string]: string | null};
+export type PostRequestChannels = {[key: string]: string};
 
 export interface TargetOptions {
   /** @nullable */
@@ -636,7 +659,7 @@ export interface TargetOptions {
 /**
  * @nullable
  */
-export type PostRequestOptions = {[key: string]: TargetOptions} | null;
+export type PostRequestOptions = null | {[key: string]: TargetOptions};
 
 export interface PostRequest {
   text: string;
@@ -650,7 +673,7 @@ export interface PostRequest {
   mediaKey?: string | null;
   /** @nullable */
   imageAltText?: string | null;
-  imageFraming?: ImageFraming | null;
+  imageFraming?: null | ImageFraming;
   /** @nullable */
   linkImageUrl?: string | null;
   /** @nullable */
@@ -681,60 +704,69 @@ export interface TargetResponse {
   channelName: string;
   network: string;
   /** @nullable */
-  textOverride?: string | null;
+  textOverride: string | null;
   status: string;
   attempt: number;
   /** @nullable */
-  postUrl?: string | null;
+  postUrl: string | null;
   /** @nullable */
-  error?: string | null;
+  error: string | null;
   /** @nullable */
-  dispatchedUtc?: string | null;
+  dispatchedUtc: string | null;
   /** @nullable */
-  completedUtc?: string | null;
+  completedUtc: string | null;
   /** @nullable */
-  automateRunId?: string | null;
-  options?: TargetOptions | null;
+  automateRunId: string | null;
+  options: null | TargetOptions;
   /** @nullable */
-  warning?: string | null;
+  warning: string | null;
   partUrls: string[];
+  /** @nullable */
+  failureKind?: string | null;
+  /** @nullable */
+  retryAtUtc?: string | null;
+  retryCount: number;
 }
 
 export interface PostResponse {
   key: string;
   text: string;
   /** @nullable */
-  linkUrl?: string | null;
+  linkUrl: string | null;
   /** @nullable */
-  linkTitle?: string | null;
+  linkTitle: string | null;
   /** @nullable */
-  linkDescription?: string | null;
+  linkDescription: string | null;
   /** @nullable */
-  linkImageUrl?: string | null;
+  linkImageUrl: string | null;
   /** @nullable */
-  mediaKey?: string | null;
+  mediaKey: string | null;
   /** @nullable */
-  imageAltText?: string | null;
-  imageFraming?: ImageFraming | null;
+  imageAltText: string | null;
+  imageFraming: null | ImageFraming;
   status: string;
   origin: string;
   /** @nullable */
-  createdByUserKey?: string | null;
+  createdByUserKey: string | null;
   /** @nullable */
-  scheduledForUtc?: string | null;
+  scheduledForUtc: string | null;
   createdUtc: string;
   updatedUtc: string;
   /** @nullable */
-  publishedUtc?: string | null;
+  publishedUtc: string | null;
   targets: TargetResponse[];
   /** @nullable */
-  reviewNote?: string | null;
-  campaign?: CampaignReferenceResponse | null;
+  reviewNote: string | null;
+  campaign: null | CampaignReferenceResponse;
   version: string;
   links: PostLink[];
-  page?: PageSourceResponse | null;
+  page?: null | PageSourceResponse;
   /** @nullable */
   pageLinks?: PagePlaceholderResponse[] | null;
+}
+
+export interface PostShortenModel {
+  urls: string[];
 }
 
 export interface PostShortLink {
@@ -742,17 +774,13 @@ export interface PostShortLink {
   code: string;
   shortUrl: string;
   /** @nullable */
-  targetUrl?: string | null;
+  targetUrl: string | null;
   /** @nullable */
-  targetContentKey?: string | null;
+  targetContentKey: string | null;
   clicks: number;
 }
 
-export interface PostShortenModel {
-  urls: string[];
-}
-
-export type PostStatus = typeof PostStatus[keyof typeof PostStatus];
+export type PostStatus = typeof PostStatus[keyof typeof PostStatus] | null;
 
 
 export const PostStatus = {
@@ -822,7 +850,6 @@ export interface ProblemDetails {
   detail?: string | null;
   /** @nullable */
   instance?: string | null;
-  [key: string]: unknown;
 }
 
 export interface ReturnRequest {
@@ -868,11 +895,11 @@ export interface ShortLinkItem {
   code: string;
   shortUrl: string;
   /** @nullable */
-  targetUrl?: string | null;
+  targetUrl: string | null;
   /** @nullable */
-  targetContentKey?: string | null;
+  targetContentKey: string | null;
   /** @nullable */
-  targetName?: string | null;
+  targetName: string | null;
   targetGone: boolean;
   postKey: string;
   channelKey: string;
@@ -922,15 +949,15 @@ export interface UtmPreviewItem {
   channelKey: string;
   url: string;
   /** @nullable */
-  reason?: string | null;
+  reason: string | null;
   /** @nullable */
-  source?: string | null;
+  source: string | null;
   /** @nullable */
-  medium?: string | null;
+  medium: string | null;
   /** @nullable */
-  campaign?: string | null;
+  campaign: string | null;
   /** @nullable */
-  content?: string | null;
+  content: string | null;
 }
 
 export interface UtmPreviewRequest {
@@ -965,6 +992,12 @@ export type ListConnectionOptionsParams = {
 network?: string;
 };
 
+export type ListOptionChoicesParams = {
+network?: string;
+connectionId?: string;
+option?: string;
+};
+
 export type ShareContentParams = {
 culture?: string;
 };
@@ -991,6 +1024,7 @@ culture?: string;
 
 export type PreviewLinkParams = {
 url?: string;
+refresh?: boolean;
 };
 
 export type GetMetricsTrendParams = {
@@ -1007,6 +1041,7 @@ campaign?: string;
 plannedFromUtc?: string;
 plannedToUtc?: string;
 unplanned?: boolean;
+history?: boolean;
 filters?: {[key: string]: string};
 };
 
@@ -1024,6 +1059,7 @@ campaign?: string;
 plannedFromUtc?: string;
 plannedToUtc?: string;
 unplanned?: boolean;
+history?: boolean;
 filters?: {[key: string]: string};
 };
 
@@ -1066,7 +1102,7 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
   export const getUmbSocialAPI = () => {
 const suggestAltText = (
-    aiAltTextBody?: AiAltTextBody,
+    aiAltTextBody: AiAltTextBody,
  options?: SecondParameter<typeof customInstance<AiTextResult>>,) => {
       return customInstance<AiTextResult>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/ai/alt-text`, method: 'POST',
@@ -1077,7 +1113,7 @@ const suggestAltText = (
     }
 
 const draftPost = (
-    aiDraftBody?: AiDraftBody,
+    aiDraftBody: AiDraftBody,
  options?: SecondParameter<typeof customInstance<AiPostVersion>>,) => {
       return customInstance<AiPostVersion>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/ai/draft`, method: 'POST',
@@ -1097,7 +1133,7 @@ const getAiOptions = (
     }
 
 const rewriteText = (
-    aiRewriteBody?: AiRewriteBody,
+    aiRewriteBody: AiRewriteBody,
  options?: SecondParameter<typeof customInstance<AiTextResult>>,) => {
       return customInstance<AiTextResult>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/ai/rewrite`, method: 'POST',
@@ -1117,7 +1153,7 @@ const getAiSettings = (
     }
 
 const saveAiSettings = (
-    aiSettings?: AiSettings,
+    aiSettings: AiSettings,
  options?: SecondParameter<typeof customInstance<AiSettings>>,) => {
       return customInstance<AiSettings>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/ai/settings`, method: 'PUT',
@@ -1138,7 +1174,7 @@ const getAiStatus = (
 
 const approvePost = (
     key: string,
-    approveRequest?: ApproveRequest,
+    approveRequest: ApproveRequest,
  options?: SecondParameter<typeof customInstance<PostKeyResponse>>,) => {
       return customInstance<PostKeyResponse>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/posts/${key}/approve`, method: 'POST',
@@ -1150,7 +1186,7 @@ const approvePost = (
 
 const returnPost = (
     key: string,
-    returnRequest?: ReturnRequest,
+    returnRequest: ReturnRequest,
  options?: SecondParameter<typeof customInstance<PostKeyResponse>>,) => {
       return customInstance<PostKeyResponse>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/posts/${key}/return`, method: 'POST',
@@ -1179,23 +1215,12 @@ const getApprovalSettings = (
     }
 
 const saveApprovalSettings = (
-    approvalSettingsModel?: ApprovalSettingsModel,
+    approvalSettingsModel: ApprovalSettingsModel,
  options?: SecondParameter<typeof customInstance<ApprovalSettingsModel>>,) => {
       return customInstance<ApprovalSettingsModel>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/settings/approvals`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: approvalSettingsModel
-    },
-      options);
-    }
-
-const addCampaign = (
-    campaignRequest?: CampaignRequest,
- options?: SecondParameter<typeof customInstance<CampaignResponse>>,) => {
-      return customInstance<CampaignResponse>(
-      {url: `/umbraco/management/api/v1/umbsocial/campaigns`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: campaignRequest
     },
       options);
     }
@@ -1210,11 +1235,13 @@ const suggestCampaigns = (
       options);
     }
 
-const deleteCampaign = (
-    key: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/umbraco/management/api/v1/umbsocial/campaigns/${key}`, method: 'DELETE'
+const addCampaign = (
+    campaignRequest: CampaignRequest,
+ options?: SecondParameter<typeof customInstance<CampaignResponse>>,) => {
+      return customInstance<CampaignResponse>(
+      {url: `/umbraco/management/api/v1/umbsocial/campaigns`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: campaignRequest
     },
       options);
     }
@@ -1230,7 +1257,7 @@ const getCampaign = (
 
 const updateCampaign = (
     key: string,
-    campaignUpdateRequest?: CampaignUpdateRequest,
+    campaignUpdateRequest: CampaignUpdateRequest,
  options?: SecondParameter<typeof customInstance<CampaignResponse>>,) => {
       return customInstance<CampaignResponse>(
       {url: `/umbraco/management/api/v1/umbsocial/campaigns/${key}`, method: 'PUT',
@@ -1240,9 +1267,18 @@ const updateCampaign = (
       options);
     }
 
+const deleteCampaign = (
+    key: string,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/umbraco/management/api/v1/umbsocial/campaigns/${key}`, method: 'DELETE'
+    },
+      options);
+    }
+
 const mergeCampaign = (
     key: string,
-    campaignMergeRequest?: CampaignMergeRequest,
+    campaignMergeRequest: CampaignMergeRequest,
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/umbraco/management/api/v1/umbsocial/campaigns/${key}/merge`, method: 'POST',
@@ -1273,23 +1309,12 @@ const getChannelSchedule = (
 
 const saveChannelSchedule = (
     key: string,
-    channelScheduleRequest?: ChannelScheduleRequest,
+    channelScheduleRequest: ChannelScheduleRequest,
  options?: SecondParameter<typeof customInstance<ChannelScheduleResponse>>,) => {
       return customInstance<ChannelScheduleResponse>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/channels/${key}/schedule`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: channelScheduleRequest
-    },
-      options);
-    }
-
-const createChannel = (
-    channelRequest?: ChannelRequest,
- options?: SecondParameter<typeof customInstance<ChannelSavedResponse>>,) => {
-      return customInstance<ChannelSavedResponse>(
-      {url: `/umbraco/management/api/v1/umbsocial/channels`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: channelRequest
     },
       options);
     }
@@ -1303,11 +1328,13 @@ const listChannels = (
       options);
     }
 
-const deleteChannel = (
-    key: string,
+const createChannel = (
+    channelRequest: ChannelRequest,
  options?: SecondParameter<typeof customInstance<ChannelSavedResponse>>,) => {
       return customInstance<ChannelSavedResponse>(
-      {url: `/umbraco/management/api/v1/umbsocial/channels/${key}`, method: 'DELETE'
+      {url: `/umbraco/management/api/v1/umbsocial/channels`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: channelRequest
     },
       options);
     }
@@ -1323,12 +1350,21 @@ const getChannel = (
 
 const updateChannel = (
     key: string,
-    channelUpdateRequest?: ChannelUpdateRequest,
+    channelUpdateRequest: ChannelUpdateRequest,
  options?: SecondParameter<typeof customInstance<ChannelSavedResponse>>,) => {
       return customInstance<ChannelSavedResponse>(
       {url: `/umbraco/management/api/v1/umbsocial/channels/${key}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: channelUpdateRequest
+    },
+      options);
+    }
+
+const deleteChannel = (
+    key: string,
+ options?: SecondParameter<typeof customInstance<ChannelSavedResponse>>,) => {
+      return customInstance<ChannelSavedResponse>(
+      {url: `/umbraco/management/api/v1/umbsocial/channels/${key}`, method: 'DELETE'
     },
       options);
     }
@@ -1347,6 +1383,15 @@ const testChannelConnection = (
  options?: SecondParameter<typeof customInstance<ConnectionTestResponse>>,) => {
       return customInstance<ConnectionTestResponse>(
       {url: `/umbraco/management/api/v1/umbsocial/channels/${key}/connection-test`, method: 'POST'
+    },
+      options);
+    }
+
+const switchOnChannel = (
+    key: string,
+ options?: SecondParameter<typeof customInstance<ChannelSavedResponse>>,) => {
+      return customInstance<ChannelSavedResponse>(
+      {url: `/umbraco/management/api/v1/umbsocial/channels/${key}/switch-on`, method: 'POST'
     },
       options);
     }
@@ -1370,6 +1415,16 @@ const listNetworks = (
       options);
     }
 
+const listOptionChoices = (
+    params?: ListOptionChoicesParams,
+ options?: SecondParameter<typeof customInstance<OptionChoicesResponse>>,) => {
+      return customInstance<OptionChoicesResponse>(
+      {url: `/umbraco/management/api/v1/umbsocial/channels/option-choices`, method: 'GET',
+        params
+    },
+      options);
+    }
+
 const shareContent = (
     key: string,
     params?: ShareContentParams,
@@ -1381,22 +1436,22 @@ const shareContent = (
       options);
     }
 
-const createContentAutomation = (
-    contentAutomationRequest?: ContentAutomationRequest,
- options?: SecondParameter<typeof customInstance<ContentAutomationCreated>>,) => {
-      return customInstance<ContentAutomationCreated>(
-      {url: `/umbraco/management/api/v1/umbsocial/pro/content-automations`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: contentAutomationRequest
-    },
-      options);
-    }
-
 const listContentAutomations = (
 
  options?: SecondParameter<typeof customInstance<ContentAutomationModel[]>>,) => {
       return customInstance<ContentAutomationModel[]>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/content-automations`, method: 'GET'
+    },
+      options);
+    }
+
+const createContentAutomation = (
+    contentAutomationRequest: ContentAutomationRequest,
+ options?: SecondParameter<typeof customInstance<ContentAutomationCreated>>,) => {
+      return customInstance<ContentAutomationCreated>(
+      {url: `/umbraco/management/api/v1/umbsocial/pro/content-automations`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: contentAutomationRequest
     },
       options);
     }
@@ -1412,7 +1467,7 @@ const getPageAutoPost = (
 
 const setPageAutoPost = (
     key: string,
-    pageAutoPostRequest?: PageAutoPostRequest,
+    pageAutoPostRequest: PageAutoPostRequest,
  options?: SecondParameter<typeof customInstance<PageAutoPostModel>>,) => {
       return customInstance<PageAutoPostModel>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/content/${key}/auto-post`, method: 'PUT',
@@ -1431,17 +1486,6 @@ const getEdition = (
       options);
     }
 
-const createHashtagGroup = (
-    hashtagGroupRequest?: HashtagGroupRequest,
- options?: SecondParameter<typeof customInstance<HashtagGroupView>>,) => {
-      return customInstance<HashtagGroupView>(
-      {url: `/umbraco/management/api/v1/umbsocial/pro/hashtags`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: hashtagGroupRequest
-    },
-      options);
-    }
-
 const listHashtagGroups = (
     params?: ListHashtagGroupsParams,
  options?: SecondParameter<typeof customInstance<PagedHashtagGroupViewModel>>,) => {
@@ -1452,11 +1496,13 @@ const listHashtagGroups = (
       options);
     }
 
-const deleteHashtagGroup = (
-    key: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/umbraco/management/api/v1/umbsocial/pro/hashtags/${key}`, method: 'DELETE'
+const createHashtagGroup = (
+    hashtagGroupRequest: HashtagGroupRequest,
+ options?: SecondParameter<typeof customInstance<HashtagGroupView>>,) => {
+      return customInstance<HashtagGroupView>(
+      {url: `/umbraco/management/api/v1/umbsocial/pro/hashtags`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: hashtagGroupRequest
     },
       options);
     }
@@ -1472,12 +1518,21 @@ const getHashtagGroup = (
 
 const updateHashtagGroup = (
     key: string,
-    hashtagGroupRequest?: HashtagGroupRequest,
+    hashtagGroupRequest: HashtagGroupRequest,
  options?: SecondParameter<typeof customInstance<HashtagGroupView>>,) => {
       return customInstance<HashtagGroupView>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/hashtags/${key}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: hashtagGroupRequest
+    },
+      options);
+    }
+
+const deleteHashtagGroup = (
+    key: string,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/umbraco/management/api/v1/umbsocial/pro/hashtags/${key}`, method: 'DELETE'
     },
       options);
     }
@@ -1493,8 +1548,8 @@ const countHashtagGroupUse = (
 
 const exportHistory = (
     params?: ExportHistoryParams,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
+ options?: SecondParameter<typeof customInstance<unknown>>,) => {
+      return customInstance<unknown>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/history/export`, method: 'GET',
         params
     },
@@ -1551,7 +1606,7 @@ const getPostShorten = (
 
 const savePostShorten = (
     key: string,
-    postShortenModel?: PostShortenModel,
+    postShortenModel: PostShortenModel,
  options?: SecondParameter<typeof customInstance<PostShortenModel>>,) => {
       return customInstance<PostShortenModel>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/posts/${key}/shorten`, method: 'PUT',
@@ -1572,7 +1627,7 @@ const getPostUtm = (
 
 const savePostUtm = (
     key: string,
-    postUtmModel?: PostUtmModel,
+    postUtmModel: PostUtmModel,
  options?: SecondParameter<typeof customInstance<PostUtmModel>>,) => {
       return customInstance<PostUtmModel>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/posts/${key}/utm`, method: 'PUT',
@@ -1592,7 +1647,7 @@ const getLinkSettings = (
     }
 
 const saveLinkSettings = (
-    linkSettingsModel?: LinkSettingsModel,
+    linkSettingsModel: LinkSettingsModel,
  options?: SecondParameter<typeof customInstance<LinkSettingsModel>>,) => {
       return customInstance<LinkSettingsModel>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/settings/links`, method: 'PUT',
@@ -1621,7 +1676,7 @@ const getUtmFields = (
     }
 
 const previewUtm = (
-    utmPreviewRequest?: UtmPreviewRequest,
+    utmPreviewRequest: UtmPreviewRequest,
  options?: SecondParameter<typeof customInstance<UtmPreviewItem[]>>,) => {
       return customInstance<UtmPreviewItem[]>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/utm/preview`, method: 'POST',
@@ -1632,7 +1687,7 @@ const previewUtm = (
     }
 
 const previewImage = (
-    imagePreviewRequest?: ImagePreviewRequest,
+    imagePreviewRequest: ImagePreviewRequest,
  options?: SecondParameter<typeof customInstance<ImagePreviewResponse>>,) => {
       return customInstance<ImagePreviewResponse>(
       {url: `/umbraco/management/api/v1/umbsocial/media/preview`, method: 'POST',
@@ -1643,7 +1698,7 @@ const previewImage = (
     }
 
 const readMetrics = (
-    metricsRequest?: MetricsRequest,
+    metricsRequest: MetricsRequest,
  options?: SecondParameter<typeof customInstance<PostMetricsResponse[]>>,) => {
       return customInstance<PostMetricsResponse[]>(
       {url: `/umbraco/management/api/v1/umbsocial/metrics`, method: 'POST',
@@ -1663,17 +1718,6 @@ const getMetricsTrend = (
       options);
     }
 
-const createPost = (
-    postRequest?: PostRequest,
- options?: SecondParameter<typeof customInstance<PostKeyResponse>>,) => {
-      return customInstance<PostKeyResponse>(
-      {url: `/umbraco/management/api/v1/umbsocial/posts`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: postRequest
-    },
-      options);
-    }
-
 const listPosts = (
     params?: ListPostsParams,
  options?: SecondParameter<typeof customInstance<PostResponse[]>>,) => {
@@ -1684,11 +1728,13 @@ const listPosts = (
       options);
     }
 
-const deletePost = (
-    key: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/umbraco/management/api/v1/umbsocial/posts/${key}`, method: 'DELETE'
+const createPost = (
+    postRequest: PostRequest,
+ options?: SecondParameter<typeof customInstance<PostKeyResponse>>,) => {
+      return customInstance<PostKeyResponse>(
+      {url: `/umbraco/management/api/v1/umbsocial/posts`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postRequest
     },
       options);
     }
@@ -1704,12 +1750,21 @@ const getPost = (
 
 const updatePost = (
     key: string,
-    postRequest?: PostRequest,
+    postRequest: PostRequest,
  options?: SecondParameter<typeof customInstance<PostKeyResponse>>,) => {
       return customInstance<PostKeyResponse>(
       {url: `/umbraco/management/api/v1/umbsocial/posts/${key}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: postRequest
+    },
+      options);
+    }
+
+const deletePost = (
+    key: string,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/umbraco/management/api/v1/umbsocial/posts/${key}`, method: 'DELETE'
     },
       options);
     }
@@ -1744,7 +1799,7 @@ const postPresenceLeft = (
     }
 
 const checkPost = (
-    postRequest?: PostRequest,
+    postRequest: PostRequest,
  options?: SecondParameter<typeof customInstance<CheckResponse>>,) => {
       return customInstance<CheckResponse>(
       {url: `/umbraco/management/api/v1/umbsocial/posts/check`, method: 'POST',
@@ -1774,7 +1829,7 @@ const getSchedule = (
     }
 
 const updateSchedule = (
-    scheduleRequest?: ScheduleRequest,
+    scheduleRequest: ScheduleRequest,
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/umbraco/management/api/v1/umbsocial/schedule`, method: 'PUT',
@@ -1813,7 +1868,7 @@ const getSettings = (
     }
 
 const updateSettings = (
-    settingsRequest?: SettingsRequest,
+    settingsRequest: SettingsRequest,
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/umbraco/management/api/v1/umbsocial/settings`, method: 'PUT',
@@ -1832,23 +1887,23 @@ const listContentMappings = (
       options);
     }
 
-const removeContentMapping = (
-    documentTypeKey: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/umbraco/management/api/v1/umbsocial/settings/content-mappings/${documentTypeKey}`, method: 'DELETE'
-    },
-      options);
-    }
-
 const saveContentMapping = (
     documentTypeKey: string,
-    contentMappingRequest?: ContentMappingRequest,
+    contentMappingRequest: ContentMappingRequest,
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/umbraco/management/api/v1/umbsocial/settings/content-mappings/${documentTypeKey}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: contentMappingRequest
+    },
+      options);
+    }
+
+const removeContentMapping = (
+    documentTypeKey: string,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/umbraco/management/api/v1/umbsocial/settings/content-mappings/${documentTypeKey}`, method: 'DELETE'
     },
       options);
     }
@@ -1874,7 +1929,7 @@ const getShortLinks = (
 
 const editShortLink = (
     code: string,
-    editShortLinkRequest?: EditShortLinkRequest,
+    editShortLinkRequest: EditShortLinkRequest,
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/short-links/${code}`, method: 'PUT',
@@ -1894,7 +1949,7 @@ const removeShortLink = (
     }
 
 const readClicks = (
-    clicksRequest?: ClicksRequest,
+    clicksRequest: ClicksRequest,
  options?: SecondParameter<typeof customInstance<ReadClicks200>>,) => {
       return customInstance<ReadClicks200>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/short-links/clicks`, method: 'POST',
@@ -1906,7 +1961,7 @@ const readClicks = (
 
 const setPostTags = (
     key: string,
-    postTagsRequest?: PostTagsRequest,
+    postTagsRequest: PostTagsRequest,
  options?: SecondParameter<typeof customInstance<void>>,) => {
       return customInstance<void>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/posts/${key}/tags`, method: 'PUT',
@@ -1926,17 +1981,6 @@ const getPostsTags = (
       options);
     }
 
-const createTag = (
-    postTagRequest?: PostTagRequest,
- options?: SecondParameter<typeof customInstance<PostTagView>>,) => {
-      return customInstance<PostTagView>(
-      {url: `/umbraco/management/api/v1/umbsocial/pro/tags`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: postTagRequest
-    },
-      options);
-    }
-
 const listTags = (
     params?: ListTagsParams,
  options?: SecondParameter<typeof customInstance<PagedPostTagViewModel>>,) => {
@@ -1947,11 +1991,13 @@ const listTags = (
       options);
     }
 
-const deleteTag = (
-    key: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/umbraco/management/api/v1/umbsocial/pro/tags/${key}`, method: 'DELETE'
+const createTag = (
+    postTagRequest: PostTagRequest,
+ options?: SecondParameter<typeof customInstance<PostTagView>>,) => {
+      return customInstance<PostTagView>(
+      {url: `/umbraco/management/api/v1/umbsocial/pro/tags`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postTagRequest
     },
       options);
     }
@@ -1967,12 +2013,21 @@ const getTag = (
 
 const updateTag = (
     key: string,
-    postTagRequest?: PostTagRequest,
+    postTagRequest: PostTagRequest,
  options?: SecondParameter<typeof customInstance<PostTagView>>,) => {
       return customInstance<PostTagView>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/tags/${key}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: postTagRequest
+    },
+      options);
+    }
+
+const deleteTag = (
+    key: string,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/umbraco/management/api/v1/umbsocial/pro/tags/${key}`, method: 'DELETE'
     },
       options);
     }
@@ -1989,7 +2044,7 @@ const getTagItems = (
 
 const markTargetPublished = (
     id: number,
-    markPublishedRequest?: MarkPublishedRequest,
+    markPublishedRequest: MarkPublishedRequest,
  options?: SecondParameter<typeof customInstance<PostKeyResponse>>,) => {
       return customInstance<PostKeyResponse>(
       {url: `/umbraco/management/api/v1/umbsocial/targets/${id}/mark-published`, method: 'POST',
@@ -2008,17 +2063,6 @@ const retryTarget = (
       options);
     }
 
-const createTemplate = (
-    postTemplateRequest?: PostTemplateRequest,
- options?: SecondParameter<typeof customInstance<PostTemplateView>>,) => {
-      return customInstance<PostTemplateView>(
-      {url: `/umbraco/management/api/v1/umbsocial/pro/templates`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: postTemplateRequest
-    },
-      options);
-    }
-
 const listTemplates = (
     params?: ListTemplatesParams,
  options?: SecondParameter<typeof customInstance<PagedPostTemplateViewModel>>,) => {
@@ -2029,11 +2073,13 @@ const listTemplates = (
       options);
     }
 
-const deleteTemplate = (
-    key: string,
- options?: SecondParameter<typeof customInstance<void>>,) => {
-      return customInstance<void>(
-      {url: `/umbraco/management/api/v1/umbsocial/pro/templates/${key}`, method: 'DELETE'
+const createTemplate = (
+    postTemplateRequest: PostTemplateRequest,
+ options?: SecondParameter<typeof customInstance<PostTemplateView>>,) => {
+      return customInstance<PostTemplateView>(
+      {url: `/umbraco/management/api/v1/umbsocial/pro/templates`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: postTemplateRequest
     },
       options);
     }
@@ -2049,12 +2095,21 @@ const getTemplate = (
 
 const updateTemplate = (
     key: string,
-    postTemplateRequest?: PostTemplateRequest,
+    postTemplateRequest: PostTemplateRequest,
  options?: SecondParameter<typeof customInstance<PostTemplateView>>,) => {
       return customInstance<PostTemplateView>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/templates/${key}`, method: 'PUT',
       headers: {'Content-Type': 'application/json', },
       data: postTemplateRequest
+    },
+      options);
+    }
+
+const deleteTemplate = (
+    key: string,
+ options?: SecondParameter<typeof customInstance<void>>,) => {
+      return customInstance<void>(
+      {url: `/umbraco/management/api/v1/umbsocial/pro/templates/${key}`, method: 'DELETE'
     },
       options);
     }
@@ -2070,17 +2125,17 @@ const duplicateTemplate = (
 
 const createPostFromTemplate = (
     key: string,
-    postFromTemplateRequest?: PostFromTemplateRequest,
+    nullPostFromTemplateRequest?: null | PostFromTemplateRequest,
  options?: SecondParameter<typeof customInstance<PostFromTemplate>>,) => {
       return customInstance<PostFromTemplate>(
       {url: `/umbraco/management/api/v1/umbsocial/pro/templates/${key}/post`, method: 'POST',
       headers: {'Content-Type': 'application/json', },
-      data: postFromTemplateRequest
+      data: nullPostFromTemplateRequest
     },
       options);
     }
 
-return {suggestAltText,draftPost,getAiOptions,rewriteText,getAiSettings,saveAiSettings,getAiStatus,approvePost,returnPost,submitPost,getApprovalSettings,saveApprovalSettings,addCampaign,suggestCampaigns,deleteCampaign,getCampaign,updateCampaign,mergeCampaign,listCampaigns,getChannelSchedule,saveChannelSchedule,createChannel,listChannels,deleteChannel,getChannel,updateChannel,ensureChannelAutomation,testChannelConnection,listConnectionOptions,listNetworks,shareContent,createContentAutomation,listContentAutomations,getPageAutoPost,setPageAutoPost,getEdition,createHashtagGroup,listHashtagGroups,deleteHashtagGroup,getHashtagGroup,updateHashtagGroup,countHashtagGroupUse,exportHistory,getStreak,mediaLink,pageLink,previewLink,getPostShorten,savePostShorten,getPostUtm,savePostUtm,getLinkSettings,saveLinkSettings,getSiteHosts,getUtmFields,previewUtm,previewImage,readMetrics,getMetricsTrend,createPost,listPosts,deletePost,getPost,updatePost,getHistory,postPresenceEditing,postPresenceLeft,checkPost,countPosts,getSchedule,updateSchedule,getNextFreeSlot,getSlots,getSettings,updateSettings,listContentMappings,removeContentMapping,saveContentMapping,getPostShortLinks,getShortLinks,editShortLink,removeShortLink,readClicks,setPostTags,getPostsTags,createTag,listTags,deleteTag,getTag,updateTag,getTagItems,markTargetPublished,retryTarget,createTemplate,listTemplates,deleteTemplate,getTemplate,updateTemplate,duplicateTemplate,createPostFromTemplate}};
+return {suggestAltText,draftPost,getAiOptions,rewriteText,getAiSettings,saveAiSettings,getAiStatus,approvePost,returnPost,submitPost,getApprovalSettings,saveApprovalSettings,suggestCampaigns,addCampaign,getCampaign,updateCampaign,deleteCampaign,mergeCampaign,listCampaigns,getChannelSchedule,saveChannelSchedule,listChannels,createChannel,getChannel,updateChannel,deleteChannel,ensureChannelAutomation,testChannelConnection,switchOnChannel,listConnectionOptions,listNetworks,listOptionChoices,shareContent,listContentAutomations,createContentAutomation,getPageAutoPost,setPageAutoPost,getEdition,listHashtagGroups,createHashtagGroup,getHashtagGroup,updateHashtagGroup,deleteHashtagGroup,countHashtagGroupUse,exportHistory,getStreak,mediaLink,pageLink,previewLink,getPostShorten,savePostShorten,getPostUtm,savePostUtm,getLinkSettings,saveLinkSettings,getSiteHosts,getUtmFields,previewUtm,previewImage,readMetrics,getMetricsTrend,listPosts,createPost,getPost,updatePost,deletePost,getHistory,postPresenceEditing,postPresenceLeft,checkPost,countPosts,getSchedule,updateSchedule,getNextFreeSlot,getSlots,getSettings,updateSettings,listContentMappings,saveContentMapping,removeContentMapping,getPostShortLinks,getShortLinks,editShortLink,removeShortLink,readClicks,setPostTags,getPostsTags,listTags,createTag,getTag,updateTag,deleteTag,getTagItems,markTargetPublished,retryTarget,listTemplates,createTemplate,getTemplate,updateTemplate,deleteTemplate,duplicateTemplate,createPostFromTemplate}};
 export type SuggestAltTextResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['suggestAltText']>>>
 export type DraftPostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['draftPost']>>>
 export type GetAiOptionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getAiOptions']>>>
@@ -2093,35 +2148,37 @@ export type ReturnPostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof 
 export type SubmitPostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['submitPost']>>>
 export type GetApprovalSettingsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getApprovalSettings']>>>
 export type SaveApprovalSettingsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['saveApprovalSettings']>>>
-export type AddCampaignResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['addCampaign']>>>
 export type SuggestCampaignsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['suggestCampaigns']>>>
-export type DeleteCampaignResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['deleteCampaign']>>>
+export type AddCampaignResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['addCampaign']>>>
 export type GetCampaignResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getCampaign']>>>
 export type UpdateCampaignResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['updateCampaign']>>>
+export type DeleteCampaignResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['deleteCampaign']>>>
 export type MergeCampaignResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['mergeCampaign']>>>
 export type ListCampaignsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listCampaigns']>>>
 export type GetChannelScheduleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getChannelSchedule']>>>
 export type SaveChannelScheduleResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['saveChannelSchedule']>>>
-export type CreateChannelResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createChannel']>>>
 export type ListChannelsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listChannels']>>>
-export type DeleteChannelResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['deleteChannel']>>>
+export type CreateChannelResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createChannel']>>>
 export type GetChannelResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getChannel']>>>
 export type UpdateChannelResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['updateChannel']>>>
+export type DeleteChannelResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['deleteChannel']>>>
 export type EnsureChannelAutomationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['ensureChannelAutomation']>>>
 export type TestChannelConnectionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['testChannelConnection']>>>
+export type SwitchOnChannelResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['switchOnChannel']>>>
 export type ListConnectionOptionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listConnectionOptions']>>>
 export type ListNetworksResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listNetworks']>>>
+export type ListOptionChoicesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listOptionChoices']>>>
 export type ShareContentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['shareContent']>>>
-export type CreateContentAutomationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createContentAutomation']>>>
 export type ListContentAutomationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listContentAutomations']>>>
+export type CreateContentAutomationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createContentAutomation']>>>
 export type GetPageAutoPostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getPageAutoPost']>>>
 export type SetPageAutoPostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['setPageAutoPost']>>>
 export type GetEditionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getEdition']>>>
-export type CreateHashtagGroupResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createHashtagGroup']>>>
 export type ListHashtagGroupsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listHashtagGroups']>>>
-export type DeleteHashtagGroupResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['deleteHashtagGroup']>>>
+export type CreateHashtagGroupResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createHashtagGroup']>>>
 export type GetHashtagGroupResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getHashtagGroup']>>>
 export type UpdateHashtagGroupResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['updateHashtagGroup']>>>
+export type DeleteHashtagGroupResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['deleteHashtagGroup']>>>
 export type CountHashtagGroupUseResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['countHashtagGroupUse']>>>
 export type ExportHistoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['exportHistory']>>>
 export type GetStreakResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getStreak']>>>
@@ -2140,11 +2197,11 @@ export type PreviewUtmResult = NonNullable<Awaited<ReturnType<ReturnType<typeof 
 export type PreviewImageResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['previewImage']>>>
 export type ReadMetricsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['readMetrics']>>>
 export type GetMetricsTrendResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getMetricsTrend']>>>
-export type CreatePostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createPost']>>>
 export type ListPostsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listPosts']>>>
-export type DeletePostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['deletePost']>>>
+export type CreatePostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createPost']>>>
 export type GetPostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getPost']>>>
 export type UpdatePostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['updatePost']>>>
+export type DeletePostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['deletePost']>>>
 export type GetHistoryResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getHistory']>>>
 export type PostPresenceEditingResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['postPresenceEditing']>>>
 export type PostPresenceLeftResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['postPresenceLeft']>>>
@@ -2157,8 +2214,8 @@ export type GetSlotsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof ge
 export type GetSettingsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getSettings']>>>
 export type UpdateSettingsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['updateSettings']>>>
 export type ListContentMappingsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listContentMappings']>>>
-export type RemoveContentMappingResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['removeContentMapping']>>>
 export type SaveContentMappingResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['saveContentMapping']>>>
+export type RemoveContentMappingResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['removeContentMapping']>>>
 export type GetPostShortLinksResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getPostShortLinks']>>>
 export type GetShortLinksResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getShortLinks']>>>
 export type EditShortLinkResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['editShortLink']>>>
@@ -2166,18 +2223,18 @@ export type RemoveShortLinkResult = NonNullable<Awaited<ReturnType<ReturnType<ty
 export type ReadClicksResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['readClicks']>>>
 export type SetPostTagsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['setPostTags']>>>
 export type GetPostsTagsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getPostsTags']>>>
-export type CreateTagResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createTag']>>>
 export type ListTagsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listTags']>>>
-export type DeleteTagResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['deleteTag']>>>
+export type CreateTagResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createTag']>>>
 export type GetTagResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getTag']>>>
 export type UpdateTagResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['updateTag']>>>
+export type DeleteTagResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['deleteTag']>>>
 export type GetTagItemsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getTagItems']>>>
 export type MarkTargetPublishedResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['markTargetPublished']>>>
 export type RetryTargetResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['retryTarget']>>>
-export type CreateTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createTemplate']>>>
 export type ListTemplatesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listTemplates']>>>
-export type DeleteTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['deleteTemplate']>>>
+export type CreateTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createTemplate']>>>
 export type GetTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getTemplate']>>>
 export type UpdateTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['updateTemplate']>>>
+export type DeleteTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['deleteTemplate']>>>
 export type DuplicateTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['duplicateTemplate']>>>
 export type CreatePostFromTemplateResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createPostFromTemplate']>>>

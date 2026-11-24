@@ -1,16 +1,16 @@
 {
   "name": "@umbhost/umbsocial-mcp",
-  "version": "1.0.0-beta1",
+  "version": "18.0.0-beta1",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@umbhost/umbsocial-mcp",
-      "version": "1.0.0-beta1",
+      "version": "18.0.0-beta1",
       "license": "MIT",
       "dependencies": {
         "@modelcontextprotocol/sdk": "1.32.2",
-        "@umbraco-cms/mcp-dev": "17.6.12",
+        "@umbraco-cms/mcp-dev": "18.1.10",
         "@umbraco-cms/mcp-server-sdk": "1.0.0-beta.47",
         "dotenv": "17.4.2",
         "zod": "4.6.7"
@@ -3207,9 +3207,9 @@
       "license": "MIT"
     },
     "node_modules/@umbraco-cms/mcp-dev": {
-      "version": "17.6.12",
-      "resolved": "https://registry.npmjs.org/@umbraco-cms/mcp-dev/-/mcp-dev-17.6.12.tgz",
-      "integrity": "sha512-JhoAe7gWv0JmJ/3ynluQADszBQdBrQhtVs+CAdMxNL/bw7A567/FPY5tzsd330z1COZ6n8zQ16dDjxvtVgVxwA==",
+      "version": "18.1.10",
+      "resolved": "https://registry.npmjs.org/@umbraco-cms/mcp-dev/-/mcp-dev-18.1.10.tgz",
+      "integrity": "sha512-kahGv+5Rs6kN/TOX7KNyyjvrRTqnRe2F7fRA105WyHCDyp0L/xO0h9cF0+GhZ0wcOzgJo+XW5h42dm1XMaKnOQ==",
       "license": "MIT",
       "dependencies": {
         "@modelcontextprotocol/sdk": "^1.28.0",

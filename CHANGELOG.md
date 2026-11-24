@@ -1,6 +1,14 @@
 # Changelog
 
-All notable changes to `@umbhost/umbsocial-mcp` are listed here. Versions follow [semantic versioning](https://semver.org). Releases for Umbraco 17 are published under the `lts-17` dist-tag, and prereleases under `beta`.
+All notable changes to `@umbhost/umbsocial-mcp` are listed here. Versions follow [semantic versioning](https://semver.org). The major version is the Umbraco major. Releases for Umbraco 18 are published under the `umbraco-18` dist-tag, and prereleases under `beta-18`.
+
+## 18.0.0-beta1
+
+The first release for Umbraco 18.
+
+- The same tools as for Umbraco 17, with Umbraco's CMS Developer MCP for Umbraco 18 (18.1.10).
+- The version number follows the Umbraco major.
+- `hono` and its Node server are at the versions that fix two moderate advisories.
 
 ## 1.0.0-beta1
 
