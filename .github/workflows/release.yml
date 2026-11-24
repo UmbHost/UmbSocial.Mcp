@@ -74,7 +74,7 @@ jobs:
           '
           rm pack.json
 
-      # A prerelease (1.0.0-beta1) goes out under the "beta" dist-tag; a stable version under "lts-17".
+      # A prerelease (17.0.0-beta1) goes out under the "beta" dist-tag; a stable version under "lts-17".
       - name: Choose the dist-tag
         run: |
           version="$(node -p "require('./package.json').version")"
