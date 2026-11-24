@@ -1,8 +1,8 @@
 {
   "name": "@umbhost/umbsocial-mcp",
-  "version": "1.0.0-beta1",
+  "version": "18.0.0-beta1",
   "type": "module",
-  "description": "MCP server for UmbSocial: read the Social calendar and write draft posts on an Umbraco 17 site.",
+  "description": "MCP server for UmbSocial: read the Social calendar and write draft posts on an Umbraco 18 site.",
   "main": "dist/index.js",
   "exports": {
     ".": "./dist/index.js",
@@ -51,7 +51,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.32.2",
-    "@umbraco-cms/mcp-dev": "17.6.12",
+    "@umbraco-cms/mcp-dev": "18.1.10",
     "@umbraco-cms/mcp-server-sdk": "1.0.0-beta.47",
     "dotenv": "17.4.2",
     "zod": "4.6.7"

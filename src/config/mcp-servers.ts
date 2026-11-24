@@ -26,11 +26,11 @@ import type { SocialConfig } from "./server-config.js";
 
 /** The CMS Developer MCP: a dependency, pinned exactly in package.json and the shrinkwrap. */
 export const CMS_MCP_PACKAGE = "@umbraco-cms/mcp-dev";
-export const CMS_MCP_VERSION = "17.6.12";
+export const CMS_MCP_VERSION = "18.1.10";
 
 /**
  * The `cms` tools a Social tool's media or document key may come from. Each
- * respects the API user's start nodes. mcp-dev 17 has no media search tool, so
+ * respects the API user's start nodes. mcp-dev has no media search tool, so
  * media keys come from browsing.
  */
 export const CMS_ID_TOOLS = {

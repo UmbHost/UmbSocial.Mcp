@@ -1,10 +1,10 @@
 # UmbSocial MCP server
 
-`@umbhost/umbsocial-mcp` lets an AI assistant work with [UmbSocial](https://docs.umb.social) on an Umbraco 17 site. The assistant can read the Social calendar, channels and campaigns, and write **draft** posts. A person reviews every draft in the Umbraco backoffice before it can go on the calendar.
+`@umbhost/umbsocial-mcp` lets an AI assistant work with [UmbSocial](https://docs.umb.social) on an Umbraco 18 site. The assistant can read the Social calendar, channels and campaigns, and write **draft** posts. A person reviews every draft in the Umbraco backoffice before it can go on the calendar.
 
 It runs on your machine over stdio and signs in to the site as an Umbraco **API user**, using that user's client credentials. It calls only UmbSocial's own management API.
 
-**Beta.** The package is a prerelease, published under npm's `beta` dist-tag. See [CHANGELOG.md](CHANGELOG.md).
+**Beta.** The package is a prerelease, published under npm's `beta-18` dist-tag. See [CHANGELOG.md](CHANGELOG.md).
 
 ## How it differs from the docs MCP
 
@@ -15,7 +15,7 @@ This server works on **your site**: it reads your posts and writes drafts as the
 ## Requirements
 
 - Node.js 22.3 or later.
-- An Umbraco 17 site with UmbSocial installed. UmbSocial Pro adds more tools, such as approvals, templates and tags, when the site is licensed.
+- An Umbraco 18 site with UmbSocial installed. UmbSocial Pro adds more tools, such as approvals, templates and tags, when the site is licensed.
 - An Umbraco **API user** with client credentials, in a user group that has the **Social** section and the Social permissions you want the assistant to have. Start with **View** and **Write**.
   - To tie posts to pages and pick images, the group also needs the **Content** and **Media** sections, start nodes, and Umbraco's **Browse** permission on those pages.
   - Give each person their own API user. Everyone using one API user shares its drafts and its rate limits.
@@ -31,7 +31,7 @@ For Claude Code, in `.mcp.json`:
   "mcpServers": {
     "umbsocial": {
       "command": "npx",
-      "args": ["-y", "@umbhost/umbsocial-mcp@beta"],
+      "args": ["-y", "@umbhost/umbsocial-mcp@beta-18"],
       "env": {
         "UMBRACO_BASE_URL": "https://www.example.com",
         "UMBRACO_CLIENT_ID": "umbraco-back-office-social-assistant",
@@ -65,7 +65,7 @@ Posts refer to Umbraco media and pages by key, so by default this server starts 
 
 - **read-only** (`UMBRACO_READONLY=true`), limited to eight tools that browse and search media and documents;
 - as the same API user, so it sees only that user's start nodes;
-- from a **pinned, shrinkwrapped** copy: `@umbraco-cms/mcp-dev` is an exact dependency of this package (17.6.12), and the published `npm-shrinkwrap.json` fixes every package beneath it, so you install the versions this release was tested with. It is started with Node from where it was installed; nothing is downloaded when the server starts.
+- from a **pinned, shrinkwrapped** copy: `@umbraco-cms/mcp-dev` is an exact dependency of this package (18.1.10), and the published `npm-shrinkwrap.json` fixes every package beneath it, so you install the versions this release was tested with. It is started with Node from where it was installed; nothing is downloaded when the server starts.
 
 This server registers only those eight tools, whatever the chained server lists, and logs the name of any other tool it drops.
 
@@ -106,7 +106,7 @@ The generated API client is built from a committed Swagger snapshot. See [CLAUDE
 
 ### Releasing
 
-`.github/workflows/release.yml` builds, tests and publishes to npm with provenance, under the `lts-17` dist-tag (`beta` for a prerelease), when a `v*` tag matching `package.json`'s version is pushed. It publishes nothing until the owner has chosen how it signs in to npm: npm Trusted Publishing (preferred) or an `NPM_TOKEN` secret. The workflow's header says how to set up each. Run it by hand for a dry run.
+`.github/workflows/release.yml` builds, tests and publishes to npm with provenance, under the `umbraco-18` dist-tag (`beta-18` for a prerelease), when a `v*` tag matching `package.json`'s version is pushed. It publishes nothing until the owner has chosen how it signs in to npm: npm Trusted Publishing (preferred) or an `NPM_TOKEN` secret. The workflow's header says how to set up each. Run it by hand for a dry run.
 
 ## Licence
 

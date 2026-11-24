@@ -9,7 +9,7 @@ Use what already exists before writing anything of our own. In this repo, "core"
 1. the SDK, `@umbraco-cms/mcp-server-sdk`;
 2. Umbraco's template, `@umbraco-cms/create-umbraco-mcp-server`, at the same version as the SDK;
 3. the CMS Developer MCP, `@umbraco-cms/mcp-dev` (chained for media and document keys);
-4. UmbSocial's own management API (`/umbraco/swagger/umbsocial/swagger.json`).
+4. UmbSocial's own management API (`/umbraco/openapi/umbsocial.json`).
 
 **Before writing code, every task lists the plumbing it needs in a table (need, what it uses, where that was verified).** Verify each row by searching the installed packages in `node_modules`, not from memory. The plan's controller approves the table before coding starts. Hand-rolled code carries a short comment saying what the SDK lacks.
 
@@ -36,7 +36,7 @@ The site enforces it; this server must never work around it or suggest otherwise
 
 - Commit messages have **no** `Co-Authored-By` trailer (public repo).
 - **Don't publish to npm**, and don't push or add a remote until the owner has created `UmbHost/UmbSocial.Mcp`.
-- Branch: `dev/v17`.
+- Branch: `dev/v18` (Umbraco 18; Umbraco 17 is on `dev/v17`).
 
 ## Wording
 

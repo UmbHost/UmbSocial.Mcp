@@ -25,7 +25,7 @@ param(
 $ErrorActionPreference = "Stop"
 $ProjectDir = Split-Path -Parent (Split-Path -Parent $MyInvocation.MyCommand.Path)
 $Snapshot = Join-Path $ProjectDir "src/umbraco-api/api/umbsocial.swagger.json"
-$SpecUrl = "$($SiteUrl.TrimEnd('/'))/umbraco/swagger/umbsocial/swagger.json"
+$SpecUrl = "$($SiteUrl.TrimEnd('/'))/umbraco/openapi/umbsocial.json"
 
 if ($env:NODE_TLS_REJECT_UNAUTHORIZED -eq "0") {
   throw "NODE_TLS_REJECT_UNAUTHORIZED=0 is set. Remove it; the dev certificate is trusted with --use-system-ca."

@@ -74,11 +74,11 @@ jobs:
           '
           rm pack.json
 
-      # A prerelease (1.0.0-beta1) goes out under the "beta" dist-tag; a stable version under "lts-17".
+      # A prerelease (18.0.0-beta1) goes out under the "beta-18" dist-tag ("beta" is Umbraco 17's); a stable version under "umbraco-18".
       - name: Choose the dist-tag
         run: |
           version="$(node -p "require('./package.json').version")"
-          case "$version" in *-*) tag=beta ;; *) tag=lts-17 ;; esac
+          case "$version" in *-*) tag=beta-18 ;; *) tag=umbraco-18 ;; esac
           echo "Publishing $version under the $tag dist-tag."
           echo "DIST_TAG=$tag" >> "$GITHUB_ENV"
 
