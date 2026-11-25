@@ -4,7 +4,7 @@
 
 It runs on your machine over stdio and signs in to the site as an Umbraco **API user**, using that user's client credentials. It calls only UmbSocial's own management API.
 
-**Beta.** The package is a prerelease, published under npm's `beta-18` dist-tag. See [CHANGELOG.md](CHANGELOG.md).
+**Release candidate.** The package is a prerelease, published under npm's `beta-18` dist-tag. See [CHANGELOG.md](CHANGELOG.md).
 
 ## How it differs from the docs MCP
 
