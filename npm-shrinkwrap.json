@@ -1,12 +1,12 @@
 {
   "name": "@umbhost/umbsocial-mcp",
-  "version": "17.0.0-beta2",
+  "version": "17.0.0-rc1",
   "lockfileVersion": 3,
   "requires": true,
   "packages": {
     "": {
       "name": "@umbhost/umbsocial-mcp",
-      "version": "17.0.0-beta2",
+      "version": "17.0.0-rc1",
       "license": "MIT",
       "dependencies": {
         "@modelcontextprotocol/sdk": "1.32.2",

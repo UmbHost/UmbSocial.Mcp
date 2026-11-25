@@ -1,6 +1,6 @@
 {
   "name": "@umbhost/umbsocial-mcp",
-  "version": "17.0.0-beta2",
+  "version": "17.0.0-rc1",
   "type": "module",
   "description": "MCP server for UmbSocial: read the Social calendar and write draft posts on an Umbraco 17 site.",
   "main": "dist/index.js",
