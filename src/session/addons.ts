@@ -42,8 +42,7 @@ export type AddOnStates = Record<AddOn, AddOnState>;
 
 const NAMES: Record<AddOn, string> = { pro: "UmbSocial Pro", ai: "UmbSocial AI", engage: "UmbSocial Engage" };
 const PACKAGES: Record<AddOn, string> = { pro: "UmbSocial.Pro", ai: "UmbSocial.AI", engage: "UmbSocial.Engage" };
-const PROBE_PERMISSION: Record<AddOn, string> = {
-  pro: "View, Write or Manage settings",
+const PROBE_PERMISSION: Record<Exclude<AddOn, "pro">, string> = {
   ai: "Use AI",
   engage: "View, Write or Manage settings",
 };
@@ -102,11 +101,13 @@ async function readAddOn(addOn: AddOn, edition: Edition): Promise<AddOnState> {
     if (codes.includes(ENGAGE_REQUIRED)) return unlicensed(NO_ENGAGE_LICENCE);
     if (codes.includes(VERB_MISSING)) {
       if (!edition.isLicensed) return unlicensed(NOT_LICENSED[addOn]);
+      // The edition says whether Pro is licensed, and any user with the section may read it.
+      if (addOn === "pro") return state({});
       const what = addOn === "ai" ? "whether it is set up" : "its licence";
       return state({
         // Engage needs its own licence on top of Pro's, which only the refused call could tell.
         licensed: addOn === "engage" ? null : true,
-        usable: addOn === "pro" ? true : null,
+        usable: null,
         reason: `${NAMES[addOn]} is installed, but this API user lacks the Social ${PROBE_PERMISSION[addOn]} permission, so ${what} couldn't be checked.`,
       });
     }
