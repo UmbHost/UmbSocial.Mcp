@@ -2,6 +2,10 @@
 
 All notable changes to `@umbhost/umbsocial-mcp` are listed here. Versions follow [semantic versioning](https://semver.org). The major version is the Umbraco major. Releases for Umbraco 17 are published under the `lts-17` dist-tag, and prereleases under `beta`.
 
+## 17.0.0-rc1
+
+The first release candidate, for UmbSocial 17's. The same as 17.0.0-beta2.
+
 ## 17.0.0-beta2
 
 The assistant can do what a person can in the backoffice, apart from putting posts on the calendar: 100 tools, up from 38.
