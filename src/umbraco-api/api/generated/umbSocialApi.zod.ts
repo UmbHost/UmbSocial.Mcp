@@ -580,6 +580,167 @@ export const getEditionResponse = zod.object({
 })
 
 
+export const getEngageCampaignFiguresParams = zod.object({
+  "key": zod.guid()
+})
+
+export const getEngageCampaignFiguresQueryParams = zod.object({
+  "from": zod.iso.date().optional(),
+  "to": zod.iso.date().optional()
+})
+
+export const getEngageCampaignFiguresResponse = zod.object({
+  "reportsExist": zod.boolean(),
+  "networks": zod.array(zod.object({
+  "source": zod.string(),
+  "entries": zod.int(),
+  "visitors": zod.int(),
+  "goals": zod.int()
+}))
+})
+
+
+export const getEngageCampaignSeriesParams = zod.object({
+  "key": zod.guid()
+})
+
+export const getEngageCampaignSeriesQueryParams = zod.object({
+  "from": zod.iso.date().optional(),
+  "to": zod.iso.date().optional()
+})
+
+export const getEngageCampaignSeriesResponse = zod.object({
+  "reportsExist": zod.boolean(),
+  "points": zod.array(zod.object({
+  "period": zod.iso.date(),
+  "source": zod.string(),
+  "entries": zod.int(),
+  "visitors": zod.int(),
+  "goals": zod.int()
+})),
+  "name": zod.string()
+})
+
+
+export const readEngagePostFiguresBody = zod.object({
+  "postKeys": zod.array(zod.guid())
+})
+
+export const readEngagePostFiguresResponseItem = zod.object({
+  "postKey": zod.guid(),
+  "visits": zod.int(),
+  "goals": zod.array(zod.object({
+  "key": zod.guid(),
+  "name": zod.string(),
+  "completions": zod.int(),
+  "value": zod.number()
+})),
+  "channels": zod.array(zod.object({
+  "channelKey": zod.guid(),
+  "visits": zod.int(),
+  "goals": zod.array(zod.object({
+  "key": zod.guid(),
+  "name": zod.string(),
+  "completions": zod.int(),
+  "value": zod.number()
+})),
+  "links": zod.array(zod.object({
+  "code": zod.string(),
+  "clicks": zod.int(),
+  "visits": zod.int()
+}))
+}))
+})
+export const readEngagePostFiguresResponse = zod.array(readEngagePostFiguresResponseItem)
+
+
+export const readEngageShortLinkVisitsBody = zod.object({
+  "shortLinkCodes": zod.array(zod.string())
+})
+
+export const readEngageShortLinkVisitsResponseItem = zod.object({
+  "code": zod.string(),
+  "visits": zod.int()
+})
+export const readEngageShortLinkVisitsResponse = zod.array(readEngageShortLinkVisitsResponseItem)
+
+
+export const getEngageSocialOverviewQueryParams = zod.object({
+  "from": zod.iso.date().optional(),
+  "to": zod.iso.date().optional()
+})
+
+export const getEngageSocialOverviewResponse = zod.object({
+  "days": zod.array(zod.object({
+  "day": zod.iso.date(),
+  "network": zod.string(),
+  "visits": zod.int()
+})),
+  "networks": zod.array(zod.object({
+  "source": zod.string(),
+  "entries": zod.int(),
+  "visitors": zod.int(),
+  "goals": zod.int()
+})),
+  "campaigns": zod.array(zod.object({
+  "campaignKey": zod.guid(),
+  "name": zod.string(),
+  "entries": zod.int(),
+  "visitors": zod.int(),
+  "goals": zod.int()
+})),
+  "posts": zod.array(zod.object({
+  "postKey": zod.guid(),
+  "title": zod.string(),
+  "visits": zod.int(),
+  "goals": zod.int()
+})),
+  "goals": zod.array(zod.object({
+  "key": zod.guid(),
+  "name": zod.string(),
+  "completions": zod.int(),
+  "value": zod.number()
+})),
+  "networkDays": zod.array(zod.object({
+  "day": zod.iso.date(),
+  "network": zod.string(),
+  "name": zod.string(),
+  "value": zod.number()
+})),
+  "funnel": zod.object({
+  "linkClicks": zod.int(),
+  "visits": zod.int(),
+  "goals": zod.int()
+})
+})
+
+
+export const getEngageStatusResponse = zod.object({
+  "goal": zod.union([zod.null(),zod.object({
+  "key": zod.guid(),
+  "name": zod.string()
+})])
+})
+
+
+export const getEngageTargetFiguresParams = zod.object({
+  "targetId": zod.int()
+})
+
+export const getEngageTargetFiguresResponse = zod.object({
+  "campaign": zod.string().nullable(),
+  "source": zod.string().nullable(),
+  "reportsExist": zod.boolean(),
+  "network": zod.union([zod.null(),zod.object({
+  "source": zod.string(),
+  "entries": zod.int(),
+  "visitors": zod.int(),
+  "goals": zod.int()
+})]),
+  "campaignKey": zod.guid().nullish()
+})
+
+
 export const listHashtagGroupsQuerySkipDefault = 0;
 export const listHashtagGroupsQueryTakeDefault = 100;
 
