@@ -39,7 +39,7 @@ const CASES: Array<[string, AddOn, () => Response, typeof LICENSED, Record<strin
   ["pro missing though licensed", "pro", missing, LICENSED, off, /UmbSocial\.Pro package isn't installed/],
   ["pro unlicensed", "pro", proLess, UNLICENSED as never, unlicensed, /isn't licensed/],
   ["pro usable", "pro", json({ total: 0, items: [] }), LICENSED, usable, null],
-  ["pro not allowed to check, licensed", "pro", forbidden, LICENSED, { installed: true, licensed: true, usable: true }, /lacks the Social View, Write or Manage settings/],
+  ["pro not allowed to check, licensed", "pro", forbidden, LICENSED, usable, null],
   ["pro not allowed to check, unlicensed", "pro", forbidden, UNLICENSED as never, unlicensed, /isn't licensed/],
   ["pro not answering", "pro", plain(500), LICENSED, unknown, /status 500/],
   ["ai missing", "ai", missing, LICENSED, { ...off, configured: null }, /UmbSocial\.AI package isn't installed/],
@@ -91,7 +91,7 @@ describe("what each add-on is", () => {
     if (reason) expect(state.reason).toMatch(reason);
     else expect(state.reason).toBeNull();
     // A user who may not ask is never told the package is missing.
-    if (reply === forbidden) expect(state.reason).not.toMatch(/isn't installed/);
+    if (reply === forbidden) expect(state.installed).toBe(true);
   });
 });
 
