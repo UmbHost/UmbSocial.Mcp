@@ -8,6 +8,7 @@ name: Release
 #        trusted  npm Trusted Publishing (preferred): on npmjs.com, add this
 #                 repository, this workflow (release.yml) and the environment
 #                 "npm" as the package's trusted publisher. No token is stored.
+#                 Allow both npm publish and npm dist-tag there.
 #        token    an npm automation token in the repository secret NPM_TOKEN.
 #      Unset (or anything else), a tag builds and tests but publishes nothing.
 #
@@ -81,12 +82,14 @@ jobs:
           case "$version" in *-*) tag=beta ;; *) tag=lts-17 ;; esac
           echo "Publishing $version under the $tag dist-tag."
           echo "DIST_TAG=$tag" >> "$GITHUB_ENV"
+          echo "VERSION=$version" >> "$GITHUB_ENV"
 
       - name: Dry run
         if: github.event_name != 'push'
         run: npm publish --dry-run --provenance --access public --tag "$DIST_TAG"
 
       - name: Publish
+        id: publish
         if: >-
           github.event_name == 'push' &&
           github.repository == 'UmbHost/UmbSocial.Mcp' &&
@@ -95,6 +98,26 @@ jobs:
           # Empty for Trusted Publishing, so npm signs in with the workflow's OIDC token.
           NODE_AUTH_TOKEN: ${{ vars.NPM_PUBLISH_METHOD == 'token' && secrets.NPM_TOKEN || '' }}
         run: npm publish --provenance --access public --tag "$DIST_TAG"
+
+      # Managing dist-tags through Trusted Publishing needs npm 11.21 or later, which Node 24 doesn't come with yet. Exact, and at least two weeks old.
+      - name: npm for the latest dist-tag
+        if: steps.publish.outcome == 'success'
+        run: npm install --global --ignore-scripts npm@11.21.1
+
+      # `npm publish` sets one dist-tag, so `latest` is moved here: to every stable version, and to a prerelease only while `latest` is
+      # itself a prerelease (nothing stable is out). It never moves to an older version. Trusted Publishing needs "Allow npm dist-tag" on
+      # the package's trusted publisher. The publish is done by now, so a failure here leaves only `latest` to be moved by hand.
+      - name: Move the latest dist-tag
+        if: steps.publish.outcome == 'success'
+        env:
+          NODE_AUTH_TOKEN: ${{ vars.NPM_PUBLISH_METHOD == 'token' && secrets.NPM_TOKEN || '' }}
+        run: |
+          latest="$(npm view @umbhost/umbsocial-mcp dist-tags.latest)"
+          move="$(node .github/scripts/moves-latest.mjs "$VERSION" "$latest")"
+          echo "latest is ${latest:-not set}; move it to $VERSION: $move"
+          if [ "$move" = true ]; then
+            npm dist-tag add "@umbhost/umbsocial-mcp@$VERSION" latest
+          fi
 
       - name: Not published
         if: >-
