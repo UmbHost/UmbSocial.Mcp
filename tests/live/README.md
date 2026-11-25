@@ -18,6 +18,7 @@ UMBSOCIAL_LIVE=1 npm run test:live   # builds first, then runs tests/live with j
 | `cms_media_tool_finds_a_key_create_post_accepts` | View + Write | `cms--get-media-root` and `cms--get-media-children` find an image, and `create-post` takes its key. |
 | `a_page_tied_draft_keeps_its_delay` | View + Write | A draft tied to a page (from `cms--get-document-root`) keeps `page.delayMinutes: 60`. |
 | `update_post_refuses_a_scheduled_post_without_a_put` | All verbs | `update-post` and `delete-post` refuse a post a person scheduled with `post.not_draft`, and the post is left exactly as it was. |
+| The rest | View + Write, and all verbs with `manage` and `settings` on | Every other tool, as far as a mock network and the site's own data allow: templates, links, campaigns, tags, channels (one is added, changed and removed), settings (saved as they were), AI and Engage where the site has them, and what each add-on's state is. |
 
 Every draft a check makes is deleted again at the end. The scheduled post is only read.
 

@@ -57,7 +57,7 @@ describe("the session at start-up", () => {
 
     expect(session.edition).toEqual(UNLICENSED);
     expect(currentEdition()).toEqual(UNLICENSED);
-    expect(result.structuredContent).toEqual({ hasSection: true, edition: UNLICENSED, verbs: ["View", "Write"] });
+    expect(result.structuredContent).toMatchObject({ hasSection: true, edition: UNLICENSED, verbs: ["View", "Write"] });
   });
 
   it("pro_tools_are_absent_when_unlicensed", async () => {

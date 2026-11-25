@@ -24,6 +24,10 @@ import createPostFromTemplate from "./post/create-post-from-template.js";
 import getShortLinkClicks from "./post/get-short-link-clicks.js";
 import setPostTags from "./put/set-post-tags.js";
 import setPostUtm from "./put/set-post-utm.js";
+import { manageTools } from "./manage/shared-lists.js";
+import { postExtraTools } from "./post-extras.js";
+import { proSettingTools } from "./settings/pro-settings.js";
+import { templateTools } from "./templates.js";
 
 const tools: ToolDefinition<any, any>[] = [
   submitPostForApproval,
@@ -44,6 +48,10 @@ const tools: ToolDefinition<any, any>[] = [
   getShortLinkClicks,
   listShortLinks,
   getMetricsTrend,
+  ...templateTools,
+  ...postExtraTools,
+  ...manageTools,
+  ...proSettingTools,
 ];
 
 export const socialProCollection: ToolCollectionExport<CurrentUser | undefined> = {

@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { PagedHashtagGroupViewModel } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { HASHTAGS_READ } from "../../../../session/social-user.js";
 import { enabledFor } from "../../social/shared.js";
 import { NEEDS_PRO, pageOf } from "../shared.js";
@@ -43,7 +43,7 @@ const listHashtagsTool: ToolDefinition<typeof inputSchema, typeof outputSchema> 
   enabled: enabledFor(HASHTAGS_READ),
   handler: async ({ filter, skip, take }) => {
     const params = { filter, ...pageOf(skip, take, PAGE_SIZE, MAX_TAKE) };
-    const response = await callSocial<PagedHashtagGroupViewModel>((api, raw) => api.listHashtagGroups(params, raw));
+    const response = await callPro<PagedHashtagGroupViewModel>((api, raw) => api.listHashtagGroups(params, raw));
     return createToolResult({
       items: response.data.items.map(({ key, name, tags, usageCount }) => ({ key, name, tags, usageCount })),
       total: response.data.total,

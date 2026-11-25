@@ -28,6 +28,7 @@ export function aTarget(overrides: Partial<TargetResponse> = {}): TargetResponse
     options: null,
     warning: null,
     partUrls: [],
+    retryCount: 0,
     ...overrides,
   } as TargetResponse;
 }
