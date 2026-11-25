@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { PostTagsView } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { READ_POST } from "../../../../session/social-user.js";
 import { enabledFor, NEEDS_READ_POST } from "../../social/shared.js";
 import { NEEDS_PRO } from "../shared.js";
@@ -41,7 +41,7 @@ const getPostTagsTool: ToolDefinition<typeof inputSchema, typeof outputSchema> =
   outputSchema,
   enabled: enabledFor(READ_POST),
   handler: async ({ postKeys }) => {
-    const response = await callSocial<PostTagsView[]>((api, raw) => api.getPostsTags({ keys: postKeys }, raw));
+    const response = await callPro<PostTagsView[]>((api, raw) => api.getPostsTags({ keys: postKeys }, raw));
     return createToolResult({
       items: response.data.map((post) => ({
         postKey: post.postKey,

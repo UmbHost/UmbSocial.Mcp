@@ -6,7 +6,7 @@
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { PostUtmModel, UtmFieldsModel } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { enabledFor, NEEDS_WRITE } from "../../social/shared.js";
 import { NEEDS_PRO } from "../shared.js";
 
@@ -28,7 +28,7 @@ export const utmOutputSchema = z.object({
 
 /** The fields the site sets centrally (`GET pro/utm/fields`). */
 export async function lockedUtmFields(): Promise<UtmField[]> {
-  const fields = (await callSocial<UtmFieldsModel>((api, raw) => api.getUtmFields(raw))).data;
+  const fields = (await callPro<UtmFieldsModel>((api, raw) => api.getUtmFields(raw))).data;
   return UTM_FIELDS.filter((field) => fields[field].locked);
 }
 
@@ -56,7 +56,7 @@ const getPostUtmTool: ToolDefinition<typeof inputSchema, typeof utmOutputSchema>
   outputSchema: utmOutputSchema,
   enabled: enabledFor(["Write"]),
   handler: async ({ key }) => {
-    const response = await callSocial<PostUtmModel>((api, raw) => api.getPostUtm(key, raw));
+    const response = await callPro<PostUtmModel>((api, raw) => api.getPostUtm(key, raw));
     return createToolResult(toUtm(response.data, await lockedUtmFields()));
   },
 };

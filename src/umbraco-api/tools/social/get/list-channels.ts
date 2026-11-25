@@ -22,7 +22,7 @@ const LIST_LIMITS = [
 /** A channel without its Automate ids, its own settings or its sort order. */
 export function toChannel(channel: ChannelResponse, limits: readonly (keyof ChannelLimitsResponse)[] | "all") {
   return {
-    ...pickFields({ ...channel }, ["key", "name", "network", "networkName", "isEnabled", "isPaused"]),
+    ...pickFields({ ...channel }, ["key", "name", "network", "networkName", "isEnabled", "isPaused", "isSwitchedOff"]),
     limits: limits === "all" ? channel.limits : pickFields({ ...channel.limits }, [...limits]),
   };
 }
@@ -36,6 +36,7 @@ const outputSchema = z.object({
       networkName: z.string(),
       isEnabled: z.boolean(),
       isPaused: z.boolean(),
+      isSwitchedOff: z.boolean(),
       limits: z.object({
         maxCharacters: z.number(),
         supportsAltText: z.boolean(),
@@ -51,7 +52,7 @@ const outputSchema = z.object({
 
 const listChannelsTool: ToolDefinition<undefined, typeof outputSchema> = {
   name: "list-channels",
-  description: `Lists the site's Social channels (one per connected network account): each channel's key, name, network, whether it is enabled or paused, and the main limits a post must keep to there (characters, alt text, an image, thread parts, a first comment). A post is sent only to enabled channels that aren't paused. Use get-channel for every limit. ${NEEDS_READ}`,
+  description: `Lists the site's Social channels (one per connected network account): each channel's key, name, network, whether it is enabled or paused, and the main limits a post must keep to there (characters, alt text, an image, thread parts, a first comment). A post is sent only to enabled channels that aren't paused or switched off (Umbraco Automate switches a channel off after repeated failures). Use get-channel for every limit. ${NEEDS_READ}`,
   slices: ["list"],
   annotations: { readOnlyHint: true },
   outputSchema,

@@ -53,6 +53,22 @@ const inputSchema = {
     .describe("Only posts tied to this page: its document key, from the cms document tools."),
   pageCulture: z.string().optional().describe("With pageKey: only the posts for this language of the page."),
   tagKey: z.guid().optional().describe("Only posts with this tag, from list-tags. Needs UmbSocial Pro."),
+  plannedFromUtc: z.iso
+    .datetime({ offset: true })
+    .optional()
+    .describe("Only posts waiting for a page whose planned release is at or after this time."),
+  plannedToUtc: z.iso
+    .datetime({ offset: true })
+    .optional()
+    .describe("Only posts waiting for a page whose planned release is before this time."),
+  unplanned: z
+    .boolean()
+    .optional()
+    .describe("True: posts waiting for a page with no planned release (with a planned range, those as well)."),
+  history: z
+    .boolean()
+    .optional()
+    .describe("True: only posts in Published's history, whatever their status while a channel is sent again."),
   newestFirst: z.boolean().optional().describe("Latest first instead of earliest first."),
   limit: z
     .number()
@@ -102,6 +118,7 @@ const listPostsTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = {
     "There is no skip or take: to see more, move the window or narrow it with a status, channel, campaign or page.",
     `It returns at most ${MAX_LIMIT} (default ${DEFAULT_LIMIT}); \`truncated\` is true when more posts matched, and \`total\` says how many.`,
     "A dated list leaves out posts waiting for their page to go live: ask with status WaitingForPage to list those (no window is used).",
+    "plannedFromUtc, plannedToUtc and unplanned pick waiting posts by their page's planned release (no window is used).",
     "Filtering by page needs Umbraco's Browse permission on it, and filtering by tag needs UmbSocial Pro.",
     NEEDS_READ_POST,
   ].join(" "),
@@ -110,7 +127,7 @@ const listPostsTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = {
   inputSchema,
   outputSchema,
   enabled: enabledFor(READ_POST),
-  handler: async ({ fromUtc, toUtc, status, channelKey, campaignKey, pageKey, pageCulture, tagKey, newestFirst, limit }) => {
+  handler: async ({ fromUtc, toUtc, status, channelKey, campaignKey, pageKey, pageCulture, tagKey, plannedFromUtc, plannedToUtc, unplanned, history, newestFirst, limit }) => {
     // An unlicensed site ignores the tag filter and lists every post, so the
     // filter is refused here instead (`TagPostFilter`).
     if (tagKey && currentEdition()?.isLicensed === false) {
@@ -119,8 +136,9 @@ const listPostsTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = {
 
     // The site leaves waiting posts out of any dated list, so they are asked for without one.
     const now = Date.now();
+    const planned = plannedFromUtc !== undefined || plannedToUtc !== undefined || unplanned === true;
     const window =
-      status === PostStatus.WaitingForPage
+      planned || status === PostStatus.WaitingForPage
         ? null
         : {
             fromUtc: fromUtc ? toUtcParam(fromUtc) : new Date(now - WINDOW_DAYS * DAY_MS).toISOString(),
@@ -134,6 +152,10 @@ const listPostsTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = {
       status,
       channel: channelKey,
       campaign: campaignKey,
+      ...(plannedFromUtc ? { plannedFromUtc: toUtcParam(plannedFromUtc) } : {}),
+      ...(plannedToUtc ? { plannedToUtc: toUtcParam(plannedToUtc) } : {}),
+      ...(unplanned ? { unplanned } : {}),
+      ...(history ? { history } : {}),
       ...(pageKey ? { "filters[content]": pageCulture ? `${pageKey}:${pageCulture}` : pageKey } : {}),
       ...(tagKey ? { "filters[tag]": tagKey } : {}),
     } as ListPostsParams;

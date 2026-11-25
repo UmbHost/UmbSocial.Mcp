@@ -1,12 +1,11 @@
 /**
- * list-short-links: every short link, newest first. Read only: editing and
- * removing short links are settings and stay in the backoffice.
+ * list-short-links: every short link, newest first.
  */
 
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { ShortLinkItem, ShortLinkPage } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { toUtcIso } from "../../../../session/time.js";
 import { enabledFor } from "../../social/shared.js";
 import { NEEDS_PRO, pageOf } from "../shared.js";
@@ -60,7 +59,6 @@ const listShortLinksTool: ToolDefinition<typeof inputSchema, typeof outputSchema
   description: [
     "Lists the site's Social short links, newest first, each with its short address, where it leads (`targetGone` when the page has gone), its post and channel, and its clicks.",
     `${PAGE_SIZE} a page; pass \`nextCursor\` back as \`cursor\` for the next.`,
-    "It only reads: short links are changed or removed in the Umbraco backoffice.",
     "Needs the Social Manage settings permission.",
     NEEDS_PRO,
   ].join(" "),
@@ -72,7 +70,7 @@ const listShortLinksTool: ToolDefinition<typeof inputSchema, typeof outputSchema
   enabled: enabledFor(["ManageSettings"]),
   handler: async ({ filter, skip, take }) => {
     const params = { filter, ...pageOf(skip, take, PAGE_SIZE, MAX_TAKE) };
-    const response = await callSocial<ShortLinkPage>((api, raw) => api.getShortLinks(params, raw));
+    const response = await callPro<ShortLinkPage>((api, raw) => api.getShortLinks(params, raw));
     return createToolResult({ items: response.data.items.map(toItem), total: response.data.total });
   },
 };

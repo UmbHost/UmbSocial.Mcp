@@ -1979,6 +1979,66 @@
         ]
       }
     },
+    "/umbraco/management/api/v1/umbsocial/channels/{key}/switch-on": {
+      "post": {
+        "tags": [
+          "Channels"
+        ],
+        "operationId": "SwitchOnChannel",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ChannelSavedResponse"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProblemDetails"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The resource is protected and requires an authentication token"
+          },
+          "403": {
+            "description": "The authenticated user does not have access to this resource"
+          }
+        },
+        "security": [
+          {
+            "Backoffice-User": []
+          }
+        ]
+      }
+    },
     "/umbraco/management/api/v1/umbsocial/channels/connections": {
       "get": {
         "tags": [
@@ -2046,6 +2106,65 @@
                       }
                     ]
                   }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The resource is protected and requires an authentication token"
+          },
+          "403": {
+            "description": "The authenticated user does not have access to this resource"
+          }
+        },
+        "security": [
+          {
+            "Backoffice-User": []
+          }
+        ]
+      }
+    },
+    "/umbraco/management/api/v1/umbsocial/channels/option-choices": {
+      "get": {
+        "tags": [
+          "Channels"
+        ],
+        "operationId": "ListOptionChoices",
+        "parameters": [
+          {
+            "name": "network",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "connectionId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "option",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/OptionChoicesResponse"
+                    }
+                  ]
                 }
               }
             }
@@ -2450,6 +2569,542 @@
           },
           "403": {
             "description": "The authenticated user does not have access to this resource"
+          }
+        },
+        "security": [
+          {
+            "Backoffice-User": []
+          }
+        ]
+      }
+    },
+    "/umbraco/management/api/v1/umbsocial/pro/engage/campaigns/{key}/figures": {
+      "get": {
+        "tags": [
+          "Engage"
+        ],
+        "operationId": "GetEngageCampaignFigures",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/EngageCampaignFigures"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProblemDetails"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The resource is protected and requires an authentication token"
+          },
+          "403": {
+            "description": "The authenticated user does not have access to this resource"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProblemDetails"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "424": {
+            "description": "Failed Dependency",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProblemDetails"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Backoffice-User": []
+          }
+        ]
+      }
+    },
+    "/umbraco/management/api/v1/umbsocial/pro/engage/campaigns/{key}/series": {
+      "get": {
+        "tags": [
+          "Engage"
+        ],
+        "operationId": "GetEngageCampaignSeries",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/EngageCampaignSeries"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProblemDetails"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The resource is protected and requires an authentication token"
+          },
+          "403": {
+            "description": "The authenticated user does not have access to this resource"
+          },
+          "404": {
+            "description": "Not Found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProblemDetails"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "424": {
+            "description": "Failed Dependency",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProblemDetails"
+                    }
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "Backoffice-User": []
+          }
+        ]
+      }
+    },
+    "/umbraco/management/api/v1/umbsocial/pro/engage/posts/figures": {
+      "post": {
+        "tags": [
+          "Engage"
+        ],
+        "operationId": "ReadEngagePostFigures",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/EngagePostsFiguresRequest"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/EngagePostsFiguresRequest"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/EngagePostsFiguresRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/EngagePostVisits"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProblemDetails"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The resource is protected and requires an authentication token"
+          },
+          "403": {
+            "description": "The authenticated user does not have access to this resource"
+          }
+        },
+        "security": [
+          {
+            "Backoffice-User": []
+          }
+        ]
+      }
+    },
+    "/umbraco/management/api/v1/umbsocial/pro/engage/short-links/visits": {
+      "post": {
+        "tags": [
+          "Engage"
+        ],
+        "operationId": "ReadEngageShortLinkVisits",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/EngageShortLinkVisitsRequest"
+                  }
+                ]
+              }
+            },
+            "text/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/EngageShortLinkVisitsRequest"
+                  }
+                ]
+              }
+            },
+            "application/*+json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/EngageShortLinkVisitsRequest"
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "$ref": "#/components/schemas/EngageShortLinkVisits"
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProblemDetails"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The resource is protected and requires an authentication token"
+          },
+          "403": {
+            "description": "The authenticated user does not have access to this resource"
+          }
+        },
+        "security": [
+          {
+            "Backoffice-User": []
+          }
+        ]
+      }
+    },
+    "/umbraco/management/api/v1/umbsocial/pro/engage/social/overview": {
+      "get": {
+        "tags": [
+          "Engage"
+        ],
+        "operationId": "GetEngageSocialOverview",
+        "parameters": [
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/EngageSocialOverview"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProblemDetails"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The resource is protected and requires an authentication token"
+          },
+          "403": {
+            "description": "The authenticated user does not have access to this resource"
+          }
+        },
+        "security": [
+          {
+            "Backoffice-User": []
+          }
+        ]
+      }
+    },
+    "/umbraco/management/api/v1/umbsocial/pro/engage/status": {
+      "get": {
+        "tags": [
+          "Engage"
+        ],
+        "operationId": "GetEngageStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/EngageStatus"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The resource is protected and requires an authentication token"
+          },
+          "403": {
+            "description": "The authenticated user does not have access to this resource"
+          }
+        },
+        "security": [
+          {
+            "Backoffice-User": []
+          }
+        ]
+      }
+    },
+    "/umbraco/management/api/v1/umbsocial/pro/engage/targets/{targetId}/figures": {
+      "get": {
+        "tags": [
+          "Engage"
+        ],
+        "operationId": "GetEngageTargetFigures",
+        "parameters": [
+          {
+            "name": "targetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/EngagePostFigures"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "The resource is protected and requires an authentication token"
+          },
+          "403": {
+            "description": "The authenticated user does not have access to this resource"
+          },
+          "424": {
+            "description": "Failed Dependency",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "oneOf": [
+                    {
+                      "$ref": "#/components/schemas/ProblemDetails"
+                    }
+                  ]
+                }
+              }
+            }
           }
         },
         "security": [
@@ -3123,6 +3778,13 @@
             "in": "query",
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "refresh",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
             }
           }
         ],
@@ -4141,6 +4803,13 @@
             }
           },
           {
+            "name": "history",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
             "name": "filters",
             "in": "query",
             "style": "deepObject",
@@ -4662,6 +5331,13 @@
           },
           {
             "name": "unplanned",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            }
+          },
+          {
+            "name": "history",
             "in": "query",
             "schema": {
               "type": "boolean"
@@ -6794,6 +7470,14 @@
           "mediaKey": {
             "type": "string",
             "format": "uuid"
+          },
+          "text": {
+            "type": "string",
+            "nullable": true
+          },
+          "linkTitle": {
+            "type": "string",
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -6923,6 +7607,14 @@
           "channelKey": {
             "type": "string",
             "format": "uuid"
+          },
+          "channelKeys": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "nullable": true
           },
           "text": {
             "type": "string",
@@ -7232,11 +7924,13 @@
       "ChannelLimitsResponse": {
         "required": [
           "altTextMax",
+          "buttonFromTextLink",
           "callsToAction",
           "contentWarningCounts",
           "countsEmojiBytes",
           "countsGraphemes",
           "firstCommentMax",
+          "imageCropOptional",
           "imageHeight",
           "imageWidth",
           "link",
@@ -7323,6 +8017,12 @@
             "items": {
               "type": "string"
             }
+          },
+          "buttonFromTextLink": {
+            "type": "boolean"
+          },
+          "imageCropOptional": {
+            "type": "boolean"
           }
         },
         "additionalProperties": false
@@ -7357,9 +8057,9 @@
       },
       "ChannelResponse": {
         "required": [
-          "automateConnectionId",
           "isEnabled",
           "isPaused",
+          "isSwitchedOff",
           "key",
           "limits",
           "metricsAutomationMissing",
@@ -7393,7 +8093,8 @@
           },
           "automateConnectionId": {
             "type": "string",
-            "format": "uuid"
+            "format": "uuid",
+            "nullable": true
           },
           "managedAutomationId": {
             "type": "string",
@@ -7417,6 +8118,9 @@
             "type": "boolean"
           },
           "metricsAutomationMissing": {
+            "type": "boolean"
+          },
+          "isSwitchedOff": {
             "type": "boolean"
           }
         },
@@ -7488,6 +8192,11 @@
         ],
         "type": "object",
         "properties": {
+          "automateConnectionId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
           "name": {
             "type": "string"
           },
@@ -7837,6 +8546,542 @@
           "channelsUsed": {
             "type": "integer",
             "format": "int32"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageCampaignFigures": {
+        "required": [
+          "networks",
+          "reportsExist"
+        ],
+        "type": "object",
+        "properties": {
+          "reportsExist": {
+            "type": "boolean"
+          },
+          "networks": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/EngageNetworkFigures"
+                }
+              ]
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageCampaignRank": {
+        "required": [
+          "campaignKey",
+          "entries",
+          "goals",
+          "name",
+          "visitors"
+        ],
+        "type": "object",
+        "properties": {
+          "campaignKey": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "visitors": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "goals": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageCampaignSeries": {
+        "required": [
+          "name",
+          "points",
+          "reportsExist"
+        ],
+        "type": "object",
+        "properties": {
+          "reportsExist": {
+            "type": "boolean"
+          },
+          "points": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/EngageSeriesPoint"
+                }
+              ]
+            }
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageChannelVisits": {
+        "required": [
+          "channelKey",
+          "goals",
+          "links",
+          "visits"
+        ],
+        "type": "object",
+        "properties": {
+          "channelKey": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "visits": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "goals": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/EngageGoalFigures"
+                }
+              ]
+            }
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/EngageLinkFigures"
+                }
+              ]
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageDayVisits": {
+        "required": [
+          "day",
+          "network",
+          "visits"
+        ],
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "network": {
+            "type": "string"
+          },
+          "visits": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageFunnel": {
+        "required": [
+          "goals",
+          "linkClicks",
+          "visits"
+        ],
+        "type": "object",
+        "properties": {
+          "linkClicks": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "visits": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "goals": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageGoalFigures": {
+        "required": [
+          "completions",
+          "key",
+          "name",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "completions": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "value": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageGoalSummary": {
+        "required": [
+          "key",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageLinkFigures": {
+        "required": [
+          "clicks",
+          "code",
+          "visits"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "clicks": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "visits": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageNetworkFigures": {
+        "required": [
+          "entries",
+          "goals",
+          "source",
+          "visitors"
+        ],
+        "type": "object",
+        "properties": {
+          "source": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "visitors": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "goals": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngagePostFigures": {
+        "required": [
+          "reportsExist"
+        ],
+        "type": "object",
+        "properties": {
+          "campaign": {
+            "type": "string",
+            "nullable": true
+          },
+          "source": {
+            "type": "string",
+            "nullable": true
+          },
+          "reportsExist": {
+            "type": "boolean"
+          },
+          "network": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EngageNetworkFigures"
+              }
+            ],
+            "nullable": true
+          },
+          "campaignKey": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngagePostRank": {
+        "required": [
+          "goals",
+          "postKey",
+          "title",
+          "visits"
+        ],
+        "type": "object",
+        "properties": {
+          "postKey": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "title": {
+            "type": "string"
+          },
+          "visits": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "goals": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngagePostVisits": {
+        "required": [
+          "channels",
+          "goals",
+          "postKey",
+          "visits"
+        ],
+        "type": "object",
+        "properties": {
+          "postKey": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "visits": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "goals": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/EngageGoalFigures"
+                }
+              ]
+            }
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/EngageChannelVisits"
+                }
+              ]
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngagePostsFiguresRequest": {
+        "required": [
+          "postKeys"
+        ],
+        "type": "object",
+        "properties": {
+          "postKeys": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageSeriesPoint": {
+        "required": [
+          "entries",
+          "goals",
+          "period",
+          "source",
+          "visitors"
+        ],
+        "type": "object",
+        "properties": {
+          "period": {
+            "type": "string",
+            "format": "date"
+          },
+          "source": {
+            "type": "string"
+          },
+          "entries": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "visitors": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "goals": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageShortLinkVisits": {
+        "required": [
+          "code",
+          "visits"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string"
+          },
+          "visits": {
+            "type": "integer",
+            "format": "int64"
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageShortLinkVisitsRequest": {
+        "required": [
+          "shortLinkCodes"
+        ],
+        "type": "object",
+        "properties": {
+          "shortLinkCodes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageSocialOverview": {
+        "required": [
+          "campaigns",
+          "days",
+          "funnel",
+          "goals",
+          "networkDays",
+          "networks",
+          "posts"
+        ],
+        "type": "object",
+        "properties": {
+          "days": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/EngageDayVisits"
+                }
+              ]
+            }
+          },
+          "networks": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/EngageNetworkFigures"
+                }
+              ]
+            }
+          },
+          "campaigns": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/EngageCampaignRank"
+                }
+              ]
+            }
+          },
+          "posts": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/EngagePostRank"
+                }
+              ]
+            }
+          },
+          "goals": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/EngageGoalFigures"
+                }
+              ]
+            }
+          },
+          "networkDays": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/MetricDay"
+                }
+              ]
+            }
+          },
+          "funnel": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EngageFunnel"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "EngageStatus": {
+        "type": "object",
+        "properties": {
+          "goal": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/EngageGoalSummary"
+              }
+            ],
+            "nullable": true
           }
         },
         "additionalProperties": false
@@ -8212,6 +9457,32 @@
         },
         "additionalProperties": false
       },
+      "MetricDay": {
+        "required": [
+          "day",
+          "name",
+          "network",
+          "value"
+        ],
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "network": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "value": {
+            "type": "number",
+            "format": "double"
+          }
+        },
+        "additionalProperties": false
+      },
       "MetricTrendPoint": {
         "required": [
           "takenUtc",
@@ -8283,6 +9554,45 @@
           "utc": {
             "type": "string",
             "format": "date-time",
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "OptionChoiceResponse": {
+        "required": [
+          "id",
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "OptionChoicesResponse": {
+        "required": [
+          "choices"
+        ],
+        "type": "object",
+        "properties": {
+          "choices": {
+            "type": "array",
+            "items": {
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/OptionChoiceResponse"
+                }
+              ]
+            }
+          },
+          "message": {
+            "type": "string",
             "nullable": true
           }
         },
@@ -9568,6 +10878,7 @@
           "id",
           "network",
           "partUrls",
+          "retryCount",
           "status"
         ],
         "type": "object",
@@ -9637,6 +10948,19 @@
             "items": {
               "type": "string"
             }
+          },
+          "failureKind": {
+            "type": "string",
+            "nullable": true
+          },
+          "retryAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "retryCount": {
+            "type": "integer",
+            "format": "int32"
           }
         },
         "additionalProperties": false
@@ -9859,6 +11183,9 @@
     },
     {
       "name": "Edition"
+    },
+    {
+      "name": "Engage"
     },
     {
       "name": "Hashtags"

@@ -1,5 +1,5 @@
 /**
- * The session: read who's calling and the edition at start-up, then choose the
+ * The session: read who's calling, the edition and the add-ons at start-up, then choose the
  * tools to register for that user.
  */
 
@@ -11,6 +11,7 @@ import {
 } from "@umbraco-cms/mcp-server-sdk";
 import { clearCurrentUser, loadCurrentUser, toSocialUser, type CurrentUser, type SocialUser } from "./social-user.js";
 import { clearEdition, loadEdition, type Edition } from "./edition.js";
+import { clearAddOns, loadAddOns, type AddOnStates } from "./addons.js";
 import { DEFAULT_OFF_SLICES } from "../config/slice-registry.js";
 
 /** What `get-social-edition` answers for a user without the Social section. */
@@ -22,9 +23,11 @@ export interface Session {
   socialUser: SocialUser;
   /** Null when the user has no Social section (reading it needs the section). */
   edition: Edition | null;
+  /** Null when the edition is. */
+  addOns: AddOnStates | null;
 }
 
-/** Reads the API user and, if it has the Social section, the edition. */
+/** Reads the API user and, if it has the Social section, the edition and the add-ons. */
 export async function startSession(): Promise<Session> {
   const user = await loadCurrentUser();
   const socialUser = toSocialUser(user);
@@ -33,15 +36,21 @@ export async function startSession(): Promise<Session> {
     console.error(
       "umbsocial-mcp: the API user's group doesn't have the Social section, so only get-social-edition is registered. Add the Social section to the group in Users › User groups, then restart.",
     );
-    return { user, socialUser, edition: null };
+    return { user, socialUser, edition: null, addOns: null };
   }
 
-  return { user, socialUser, edition: await loadEdition() };
+  const edition = await loadEdition();
+  const addOns = await loadAddOns(edition);
+  for (const { reason } of Object.values(addOns)) {
+    if (reason) console.error(`umbsocial-mcp: ${reason}`);
+  }
+  return { user, socialUser, edition, addOns };
 }
 
 export function clearSession(): void {
   clearCurrentUser();
   clearEdition();
+  clearAddOns();
 }
 
 /**

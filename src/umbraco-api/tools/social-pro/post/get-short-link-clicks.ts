@@ -6,7 +6,7 @@
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { ReadClicks200 } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { READ_POST } from "../../../../session/social-user.js";
 import { enabledFor, NEEDS_READ_POST } from "../../social/shared.js";
 import { NEEDS_PRO } from "../shared.js";
@@ -42,7 +42,7 @@ const getShortLinkClicksTool: ToolDefinition<typeof inputSchema, typeof outputSc
   outputSchema,
   enabled: enabledFor(READ_POST),
   handler: async ({ postKeys }) => {
-    const response = await callSocial<ReadClicks200>((api, raw) => api.readClicks({ postKeys }, raw));
+    const response = await callPro<ReadClicks200>((api, raw) => api.readClicks({ postKeys }, raw));
     return createToolResult({
       items: Object.entries(response.data).map(([postKey, clicks]) => ({ postKey, total: clicks.total, channels: clicks.channels })),
     });

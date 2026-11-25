@@ -6,7 +6,8 @@
 import { z } from "zod";
 import { createToolResult, UmbracoApiError, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { PostKeyResponse } from "../../../api/generated/umbSocialApi.js";
-import { callSocial, REFUSAL_HINTS } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
+import { REFUSAL_HINTS } from "../../../../session/refusals.js";
 import { toUtcParam } from "../../../../session/time.js";
 import { PAGE_DELAYS } from "../../social/post-input.js";
 import { confirmIfSupported, confirmInput, enabledFor } from "../../social/shared.js";
@@ -80,7 +81,7 @@ const approvePostTool: ToolDefinition<typeof inputSchema, typeof outputSchema> =
       pageDelayMinutes: pageDelayMinutes ?? null,
       expectedVersion,
     };
-    const response = await callSocial<PostKeyResponse>((api, raw) => api.approvePost(key, request, raw));
+    const response = await callPro<PostKeyResponse>((api, raw) => api.approvePost(key, request, raw));
     return createToolResult({ key: response.data.key, version: response.data.version, approved: true });
   },
 };

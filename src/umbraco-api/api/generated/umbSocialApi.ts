@@ -8,6 +8,10 @@ import { customInstance } from '../client.js';
 export interface AiAltTextBody {
   postKey: string;
   mediaKey: string;
+  /** @nullable */
+  text?: string | null;
+  /** @nullable */
+  linkTitle?: string | null;
 }
 
 export interface AiContextOption {
@@ -44,6 +48,8 @@ export interface AiPostVersion {
 export interface AiRewriteBody {
   postKey: string;
   channelKey: string;
+  /** @nullable */
+  channelKeys?: string[] | null;
   /** @nullable */
   text?: string | null;
   /** @nullable */
@@ -172,6 +178,8 @@ export interface ChannelLimitsResponse {
   countsEmojiBytes: boolean;
   titleMax: number;
   callsToAction: string[];
+  buttonFromTextLink: boolean;
+  imageCropOptional: boolean;
 }
 
 export type ChannelRequestOptions = {[key: string]: string};
@@ -192,13 +200,15 @@ export interface ChannelResponse {
   networkName: string;
   isEnabled: boolean;
   sortOrder: number;
-  automateConnectionId: string;
+  /** @nullable */
+  automateConnectionId?: string | null;
   /** @nullable */
   managedAutomationId?: string | null;
   options: ChannelResponseOptions;
   limits: ChannelLimitsResponse;
   isPaused: boolean;
   metricsAutomationMissing: boolean;
+  isSwitchedOff: boolean;
 }
 
 export interface ChannelSavedResponse {
@@ -235,6 +245,8 @@ export interface ChannelScheduleResponse {
 export type ChannelUpdateRequestOptions = {[key: string]: string};
 
 export interface ChannelUpdateRequest {
+  /** @nullable */
+  automateConnectionId?: string | null;
   name: string;
   isEnabled: boolean;
   options: ChannelUpdateRequestOptions;
@@ -351,6 +363,136 @@ export interface EditionResponse {
   /** @nullable */
   historyDays?: number | null;
   channelsUsed: number;
+}
+
+export interface EngageNetworkFigures {
+  source: string;
+  entries: number;
+  visitors: number;
+  goals: number;
+}
+
+export interface EngageCampaignFigures {
+  reportsExist: boolean;
+  networks: EngageNetworkFigures[];
+}
+
+export interface EngageCampaignRank {
+  campaignKey: string;
+  name: string;
+  entries: number;
+  visitors: number;
+  goals: number;
+}
+
+export interface EngageSeriesPoint {
+  period: string;
+  source: string;
+  entries: number;
+  visitors: number;
+  goals: number;
+}
+
+export interface EngageCampaignSeries {
+  reportsExist: boolean;
+  points: EngageSeriesPoint[];
+  name: string;
+}
+
+export interface EngageGoalFigures {
+  key: string;
+  name: string;
+  completions: number;
+  value: number;
+}
+
+export interface EngageLinkFigures {
+  code: string;
+  clicks: number;
+  visits: number;
+}
+
+export interface EngageChannelVisits {
+  channelKey: string;
+  visits: number;
+  goals: EngageGoalFigures[];
+  links: EngageLinkFigures[];
+}
+
+export interface EngageDayVisits {
+  day: string;
+  network: string;
+  visits: number;
+}
+
+export interface EngageFunnel {
+  linkClicks: number;
+  visits: number;
+  goals: number;
+}
+
+export interface EngageGoalSummary {
+  key: string;
+  name: string;
+}
+
+export interface EngagePostFigures {
+  /** @nullable */
+  campaign?: string | null;
+  /** @nullable */
+  source?: string | null;
+  reportsExist: boolean;
+  network?: EngageNetworkFigures | null;
+  /** @nullable */
+  campaignKey?: string | null;
+}
+
+export interface EngagePostRank {
+  postKey: string;
+  title: string;
+  visits: number;
+  goals: number;
+}
+
+export interface EngagePostVisits {
+  postKey: string;
+  visits: number;
+  goals: EngageGoalFigures[];
+  channels: EngageChannelVisits[];
+}
+
+export interface EngagePostsFiguresRequest {
+  postKeys: string[];
+}
+
+export interface EngageShortLinkVisits {
+  code: string;
+  visits: number;
+}
+
+export interface EngageShortLinkVisitsRequest {
+  shortLinkCodes: string[];
+}
+
+export interface MetricDay {
+  day: string;
+  network: string;
+  name: string;
+  value: number;
+}
+
+export interface EngageSocialOverview {
+  days: EngageDayVisits[];
+  networks: EngageNetworkFigures[];
+  campaigns: EngageCampaignRank[];
+  posts: EngagePostRank[];
+  goals: EngageGoalFigures[];
+  networkDays: MetricDay[];
+  funnel: EngageFunnel;
+}
+
+export interface EngageStatus {
+  goal?: EngageGoalSummary | null;
 }
 
 export interface HashtagGroupRequest {
@@ -479,6 +621,17 @@ export interface NetworkResponse {
 export interface NextFreeSlotResponse {
   /** @nullable */
   utc?: string | null;
+}
+
+export interface OptionChoiceResponse {
+  id: string;
+  name: string;
+}
+
+export interface OptionChoicesResponse {
+  choices: OptionChoiceResponse[];
+  /** @nullable */
+  message?: string | null;
 }
 
 export interface PageAutoPostModel {
@@ -698,6 +851,11 @@ export interface TargetResponse {
   /** @nullable */
   warning?: string | null;
   partUrls: string[];
+  /** @nullable */
+  failureKind?: string | null;
+  /** @nullable */
+  retryAtUtc?: string | null;
+  retryCount: number;
 }
 
 export interface PostResponse {
@@ -965,8 +1123,29 @@ export type ListConnectionOptionsParams = {
 network?: string;
 };
 
+export type ListOptionChoicesParams = {
+network?: string;
+connectionId?: string;
+option?: string;
+};
+
 export type ShareContentParams = {
 culture?: string;
+};
+
+export type GetEngageCampaignFiguresParams = {
+from?: string;
+to?: string;
+};
+
+export type GetEngageCampaignSeriesParams = {
+from?: string;
+to?: string;
+};
+
+export type GetEngageSocialOverviewParams = {
+from?: string;
+to?: string;
 };
 
 export type ListHashtagGroupsParams = {
@@ -991,6 +1170,7 @@ culture?: string;
 
 export type PreviewLinkParams = {
 url?: string;
+refresh?: boolean;
 };
 
 export type GetMetricsTrendParams = {
@@ -1007,6 +1187,7 @@ campaign?: string;
 plannedFromUtc?: string;
 plannedToUtc?: string;
 unplanned?: boolean;
+history?: boolean;
 filters?: {[key: string]: string};
 };
 
@@ -1024,6 +1205,7 @@ campaign?: string;
 plannedFromUtc?: string;
 plannedToUtc?: string;
 unplanned?: boolean;
+history?: boolean;
 filters?: {[key: string]: string};
 };
 
@@ -1351,6 +1533,15 @@ const testChannelConnection = (
       options);
     }
 
+const switchOnChannel = (
+    key: string,
+ options?: SecondParameter<typeof customInstance<ChannelSavedResponse>>,) => {
+      return customInstance<ChannelSavedResponse>(
+      {url: `/umbraco/management/api/v1/umbsocial/channels/${key}/switch-on`, method: 'POST'
+    },
+      options);
+    }
+
 const listConnectionOptions = (
     params?: ListConnectionOptionsParams,
  options?: SecondParameter<typeof customInstance<ConnectionOptionResponse[]>>,) => {
@@ -1366,6 +1557,16 @@ const listNetworks = (
  options?: SecondParameter<typeof customInstance<NetworkResponse[]>>,) => {
       return customInstance<NetworkResponse[]>(
       {url: `/umbraco/management/api/v1/umbsocial/channels/networks`, method: 'GET'
+    },
+      options);
+    }
+
+const listOptionChoices = (
+    params?: ListOptionChoicesParams,
+ options?: SecondParameter<typeof customInstance<OptionChoicesResponse>>,) => {
+      return customInstance<OptionChoicesResponse>(
+      {url: `/umbraco/management/api/v1/umbsocial/channels/option-choices`, method: 'GET',
+        params
     },
       options);
     }
@@ -1427,6 +1628,78 @@ const getEdition = (
  options?: SecondParameter<typeof customInstance<EditionResponse>>,) => {
       return customInstance<EditionResponse>(
       {url: `/umbraco/management/api/v1/umbsocial/edition`, method: 'GET'
+    },
+      options);
+    }
+
+const getEngageCampaignFigures = (
+    key: string,
+    params?: GetEngageCampaignFiguresParams,
+ options?: SecondParameter<typeof customInstance<EngageCampaignFigures>>,) => {
+      return customInstance<EngageCampaignFigures>(
+      {url: `/umbraco/management/api/v1/umbsocial/pro/engage/campaigns/${key}/figures`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+const getEngageCampaignSeries = (
+    key: string,
+    params?: GetEngageCampaignSeriesParams,
+ options?: SecondParameter<typeof customInstance<EngageCampaignSeries>>,) => {
+      return customInstance<EngageCampaignSeries>(
+      {url: `/umbraco/management/api/v1/umbsocial/pro/engage/campaigns/${key}/series`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+const readEngagePostFigures = (
+    engagePostsFiguresRequest?: EngagePostsFiguresRequest,
+ options?: SecondParameter<typeof customInstance<EngagePostVisits[]>>,) => {
+      return customInstance<EngagePostVisits[]>(
+      {url: `/umbraco/management/api/v1/umbsocial/pro/engage/posts/figures`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: engagePostsFiguresRequest
+    },
+      options);
+    }
+
+const readEngageShortLinkVisits = (
+    engageShortLinkVisitsRequest?: EngageShortLinkVisitsRequest,
+ options?: SecondParameter<typeof customInstance<EngageShortLinkVisits[]>>,) => {
+      return customInstance<EngageShortLinkVisits[]>(
+      {url: `/umbraco/management/api/v1/umbsocial/pro/engage/short-links/visits`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: engageShortLinkVisitsRequest
+    },
+      options);
+    }
+
+const getEngageSocialOverview = (
+    params?: GetEngageSocialOverviewParams,
+ options?: SecondParameter<typeof customInstance<EngageSocialOverview>>,) => {
+      return customInstance<EngageSocialOverview>(
+      {url: `/umbraco/management/api/v1/umbsocial/pro/engage/social/overview`, method: 'GET',
+        params
+    },
+      options);
+    }
+
+const getEngageStatus = (
+
+ options?: SecondParameter<typeof customInstance<EngageStatus>>,) => {
+      return customInstance<EngageStatus>(
+      {url: `/umbraco/management/api/v1/umbsocial/pro/engage/status`, method: 'GET'
+    },
+      options);
+    }
+
+const getEngageTargetFigures = (
+    targetId: number,
+ options?: SecondParameter<typeof customInstance<EngagePostFigures>>,) => {
+      return customInstance<EngagePostFigures>(
+      {url: `/umbraco/management/api/v1/umbsocial/pro/engage/targets/${targetId}/figures`, method: 'GET'
     },
       options);
     }
@@ -2080,7 +2353,7 @@ const createPostFromTemplate = (
       options);
     }
 
-return {suggestAltText,draftPost,getAiOptions,rewriteText,getAiSettings,saveAiSettings,getAiStatus,approvePost,returnPost,submitPost,getApprovalSettings,saveApprovalSettings,addCampaign,suggestCampaigns,deleteCampaign,getCampaign,updateCampaign,mergeCampaign,listCampaigns,getChannelSchedule,saveChannelSchedule,createChannel,listChannels,deleteChannel,getChannel,updateChannel,ensureChannelAutomation,testChannelConnection,listConnectionOptions,listNetworks,shareContent,createContentAutomation,listContentAutomations,getPageAutoPost,setPageAutoPost,getEdition,createHashtagGroup,listHashtagGroups,deleteHashtagGroup,getHashtagGroup,updateHashtagGroup,countHashtagGroupUse,exportHistory,getStreak,mediaLink,pageLink,previewLink,getPostShorten,savePostShorten,getPostUtm,savePostUtm,getLinkSettings,saveLinkSettings,getSiteHosts,getUtmFields,previewUtm,previewImage,readMetrics,getMetricsTrend,createPost,listPosts,deletePost,getPost,updatePost,getHistory,postPresenceEditing,postPresenceLeft,checkPost,countPosts,getSchedule,updateSchedule,getNextFreeSlot,getSlots,getSettings,updateSettings,listContentMappings,removeContentMapping,saveContentMapping,getPostShortLinks,getShortLinks,editShortLink,removeShortLink,readClicks,setPostTags,getPostsTags,createTag,listTags,deleteTag,getTag,updateTag,getTagItems,markTargetPublished,retryTarget,createTemplate,listTemplates,deleteTemplate,getTemplate,updateTemplate,duplicateTemplate,createPostFromTemplate}};
+return {suggestAltText,draftPost,getAiOptions,rewriteText,getAiSettings,saveAiSettings,getAiStatus,approvePost,returnPost,submitPost,getApprovalSettings,saveApprovalSettings,addCampaign,suggestCampaigns,deleteCampaign,getCampaign,updateCampaign,mergeCampaign,listCampaigns,getChannelSchedule,saveChannelSchedule,createChannel,listChannels,deleteChannel,getChannel,updateChannel,ensureChannelAutomation,testChannelConnection,switchOnChannel,listConnectionOptions,listNetworks,listOptionChoices,shareContent,createContentAutomation,listContentAutomations,getPageAutoPost,setPageAutoPost,getEdition,getEngageCampaignFigures,getEngageCampaignSeries,readEngagePostFigures,readEngageShortLinkVisits,getEngageSocialOverview,getEngageStatus,getEngageTargetFigures,createHashtagGroup,listHashtagGroups,deleteHashtagGroup,getHashtagGroup,updateHashtagGroup,countHashtagGroupUse,exportHistory,getStreak,mediaLink,pageLink,previewLink,getPostShorten,savePostShorten,getPostUtm,savePostUtm,getLinkSettings,saveLinkSettings,getSiteHosts,getUtmFields,previewUtm,previewImage,readMetrics,getMetricsTrend,createPost,listPosts,deletePost,getPost,updatePost,getHistory,postPresenceEditing,postPresenceLeft,checkPost,countPosts,getSchedule,updateSchedule,getNextFreeSlot,getSlots,getSettings,updateSettings,listContentMappings,removeContentMapping,saveContentMapping,getPostShortLinks,getShortLinks,editShortLink,removeShortLink,readClicks,setPostTags,getPostsTags,createTag,listTags,deleteTag,getTag,updateTag,getTagItems,markTargetPublished,retryTarget,createTemplate,listTemplates,deleteTemplate,getTemplate,updateTemplate,duplicateTemplate,createPostFromTemplate}};
 export type SuggestAltTextResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['suggestAltText']>>>
 export type DraftPostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['draftPost']>>>
 export type GetAiOptionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getAiOptions']>>>
@@ -2109,14 +2382,23 @@ export type GetChannelResult = NonNullable<Awaited<ReturnType<ReturnType<typeof 
 export type UpdateChannelResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['updateChannel']>>>
 export type EnsureChannelAutomationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['ensureChannelAutomation']>>>
 export type TestChannelConnectionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['testChannelConnection']>>>
+export type SwitchOnChannelResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['switchOnChannel']>>>
 export type ListConnectionOptionsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listConnectionOptions']>>>
 export type ListNetworksResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listNetworks']>>>
+export type ListOptionChoicesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listOptionChoices']>>>
 export type ShareContentResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['shareContent']>>>
 export type CreateContentAutomationResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createContentAutomation']>>>
 export type ListContentAutomationsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listContentAutomations']>>>
 export type GetPageAutoPostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getPageAutoPost']>>>
 export type SetPageAutoPostResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['setPageAutoPost']>>>
 export type GetEditionResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getEdition']>>>
+export type GetEngageCampaignFiguresResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getEngageCampaignFigures']>>>
+export type GetEngageCampaignSeriesResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getEngageCampaignSeries']>>>
+export type ReadEngagePostFiguresResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['readEngagePostFigures']>>>
+export type ReadEngageShortLinkVisitsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['readEngageShortLinkVisits']>>>
+export type GetEngageSocialOverviewResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getEngageSocialOverview']>>>
+export type GetEngageStatusResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getEngageStatus']>>>
+export type GetEngageTargetFiguresResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['getEngageTargetFigures']>>>
 export type CreateHashtagGroupResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['createHashtagGroup']>>>
 export type ListHashtagGroupsResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['listHashtagGroups']>>>
 export type DeleteHashtagGroupResult = NonNullable<Awaited<ReturnType<ReturnType<typeof getUmbSocialAPI>['deleteHashtagGroup']>>>

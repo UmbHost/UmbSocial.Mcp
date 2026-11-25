@@ -6,7 +6,7 @@
  *
  * The collections apply the same gates as this server, so a host filtering
  * them with the SDK alone can't expose more: a tool in a default-off slice
- * (`approve`, `resolve`) is left out unless `UMBSOCIAL_ENABLE_SLICES` names
+ * (`approve`, `resolve`, `manage`, `settings`) is left out unless `UMBSOCIAL_ENABLE_SLICES` names
  * its slice (read on every call, and an unknown name throws), whatever
  * `UMBRACO_INCLUDE_TOOLS` says; and, given a user, a tool whose `enabled`
  * refuses that user is left out.

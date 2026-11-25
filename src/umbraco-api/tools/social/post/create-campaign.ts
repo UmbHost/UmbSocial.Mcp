@@ -11,6 +11,7 @@ import { NEEDS_WRITE, enabledFor, withRawTextChecks } from "../shared.js";
 
 const inputSchema = {
   name: z.string().min(1).describe(`The campaign's name. ${RAW_FIELD_MARKER}`),
+  value: z.string().min(1).optional().describe(`The campaign's value (the utm_campaign it adds to links). Taken only from a user with Manage settings; otherwise the site makes it from the name. ${RAW_FIELD_MARKER}`),
 };
 
 const outputSchema = z.object({
@@ -29,9 +30,9 @@ const createCampaignTool: ToolDefinition<typeof inputSchema, typeof outputSchema
   inputSchema,
   outputSchema,
   enabled: enabledFor(["Write"]),
-  handler: async ({ name }) => {
-    // The site ignores a value from anyone without Manage settings, so none is sent.
-    const response = await callSocial<CampaignResponse>((api, raw) => api.addCampaign({ name, reuseExisting: true }, raw));
+  handler: async ({ name, value }) => {
+    // The site ignores a value from anyone without Manage settings.
+    const response = await callSocial<CampaignResponse>((api, raw) => api.addCampaign({ name, reuseExisting: true, ...(value ? { value } : {}) }, raw));
     return createToolResult(withUtcTimes(response.data));
   },
 };

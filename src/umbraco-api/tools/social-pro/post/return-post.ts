@@ -6,7 +6,7 @@
 import { z } from "zod";
 import { createToolResult, RAW_FIELD_MARKER, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { PostKeyResponse } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { enabledFor, withRawTextChecks } from "../../social/shared.js";
 import { NEEDS_PRO } from "../shared.js";
 
@@ -46,7 +46,7 @@ const returnPostTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = 
   outputSchema,
   enabled: enabledFor(["Approve"]),
   handler: async ({ key, expectedVersion, note }) => {
-    const response = await callSocial<PostKeyResponse>((api, raw) => api.returnPost(key, { note, expectedVersion }, raw));
+    const response = await callPro<PostKeyResponse>((api, raw) => api.returnPost(key, { note, expectedVersion }, raw));
     return createToolResult({ key: response.data.key, version: response.data.version, status: "Draft" as const });
   },
 };
