@@ -6,6 +6,7 @@
 import { z } from "zod";
 import {
   confirmAction,
+  createToolResult,
   getSupportedElicitationKind,
   rejectControlCharacters,
   UmbracoApiError,
@@ -92,4 +93,28 @@ export function withRawTextChecks<T extends ToolDefinition<any, any>>(tool: T): 
       return handler(args, extra);
     }) as T["handler"],
   };
+}
+
+export const NEEDS_VIEW = "Needs the Social View permission.";
+export const NEEDS_MANAGE = "Needs the Social Manage settings permission.";
+/** Said by every tool in a slice that is off unless asked for. */
+export const offByDefault = (slice: "manage" | "settings") => `Off unless UMBSOCIAL_ENABLE_SLICES names ${slice}.`;
+export const ASKS_FIRST = "The person is asked to confirm first; a client that can't ask needs confirm: true.";
+
+/** What a tool that may be declined answers. */
+export const outcomeSchema = z.object({ key: z.string(), done: z.boolean(), message: z.string().optional() });
+
+/** Asks, then does it: what a tool that deletes or can't be undone answers. */
+export async function confirmed(
+  extra: { requestId?: string | number } | undefined,
+  question: string,
+  confirm: boolean | undefined,
+  key: string,
+  run: () => Promise<unknown>,
+) {
+  if (!(await confirmIfSupported(extra, question, confirm))) {
+    return createToolResult({ key, done: false, message: "The person chose not to." });
+  }
+  await run();
+  return createToolResult({ key, done: true });
 }

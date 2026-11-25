@@ -86,7 +86,7 @@ function definedFields<T extends object>(value: T): Partial<T> {
 /**
  * `base` with only what `input` names changed, as a draft. A new link clears
  * the old card, a new image the old alt text and crops, and a new page the
- * old language and delay, unless they are given too (crops can't be).
+ * old language and delay, unless they are given too.
  */
 export function applyChanges(base: PostRequest, input: PostInputArgs): PostRequest {
   const next: PostRequest = { ...base, when: "Draft", atUtc: null };
@@ -132,6 +132,13 @@ export function applyChanges(base: PostRequest, input: PostInputArgs): PostReque
     next.mediaKey = input.mediaKey;
   }
   if (input.imageAltText !== undefined) next.imageAltText = input.imageAltText;
+
+  if (input.imageFraming !== undefined) {
+    next.imageFraming = input.imageFraming && { focalPoint: input.imageFraming.focalPoint ?? null, crops: input.imageFraming.crops };
+  }
+  if (input.pageLinks !== undefined) {
+    next.links = input.pageLinks.map(({ url, pageKey, pageCulture }) => ({ url, contentKey: pageKey, culture: pageCulture ?? null }));
+  }
 
   if (input.campaignKey !== undefined) next.campaignKey = input.campaignKey;
 

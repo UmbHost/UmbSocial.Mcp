@@ -1,8 +1,8 @@
 /**
  * Tool mode registry: the single source of truth for mode names.
  *
- * `social` works on any UmbSocial site; `social-pro` registers its tools only
- * when the site's edition is licensed.
+ * `social` works on any UmbSocial site; the others register their
+ * tools only when the site has that add-on, licensed.
  */
 
 import type { ToolModeDefinition } from "@umbraco-cms/mcp-server-sdk";
@@ -19,6 +19,18 @@ export const toolModes: ToolModeDefinition[] = [
     displayName: "Social Pro",
     description: "UmbSocial Pro: approvals, templates, tags, hashtags, UTM, short links and metrics trends",
     collections: ["social-pro"],
+  },
+  {
+    name: "social-ai",
+    displayName: "Social AI",
+    description: "UmbSocial AI: drafting, rewriting and alt text with the site's own AI",
+    collections: ["social-ai"],
+  },
+  {
+    name: "social-engage",
+    displayName: "Social Engage",
+    description: "UmbSocial Engage: what social posts bring to the site, from Umbraco Engage",
+    collections: ["social-engage"],
   },
 ];
 

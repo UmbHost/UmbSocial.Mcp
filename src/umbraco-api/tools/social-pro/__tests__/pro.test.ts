@@ -34,6 +34,20 @@ const VERSION = "56565656-5656-4565-8565-565656565656";
 const SAVED = { key: POST, version: VERSION };
 
 const PRO_TOOL_NAMES = [
+  "create-template",
+  "delete-template",
+  "duplicate-template",
+  "export-history",
+  "get-approval-settings",
+  "get-channel-schedule",
+  "get-link-settings",
+  "get-page-auto-post",
+  "get-post-shortening",
+  "list-content-automations",
+  "preview-utm",
+  "set-page-auto-post",
+  "set-post-shortening",
+  "update-template",
   "get-hashtag-group",
   "get-metrics-trend",
   "get-post-short-links",
@@ -112,7 +126,7 @@ describe("the Pro tools", () => {
   it("approve_and_return_are_absent_by_default", () => {
     expect(proNames(off, ...ALL_VERBS)).not.toContain("approve-post");
     expect(proNames(off, ...ALL_VERBS)).not.toContain("return-post");
-    expect(proNames(on, "Approve")).toEqual(["approve-post", "return-post"]);
+    expect(proNames(on, "Approve")).toEqual(["approve-post", "get-approval-settings", "return-post"]);
     expect(proNames(on, "Write", "View", "Schedule")).not.toContain("approve-post");
     expect(approvePost.slices).toEqual(["approve"]);
     expect(returnPost.slices).toEqual(["approve"]);

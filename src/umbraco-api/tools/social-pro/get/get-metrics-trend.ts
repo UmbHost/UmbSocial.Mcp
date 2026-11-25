@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { MetricTrendPoint } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { READ_POST } from "../../../../session/social-user.js";
 import { withUtcTimes } from "../../../../session/time.js";
 import { enabledFor, NEEDS_READ_POST } from "../../social/shared.js";
@@ -33,7 +33,7 @@ const getMetricsTrendTool: ToolDefinition<typeof inputSchema, typeof outputSchem
   outputSchema,
   enabled: enabledFor(READ_POST),
   handler: async ({ targetId }) => {
-    const response = await callSocial<MetricTrendPoint[]>((api, raw) => api.getMetricsTrend({ targetId }, raw));
+    const response = await callPro<MetricTrendPoint[]>((api, raw) => api.getMetricsTrend({ targetId }, raw));
     return createToolResult({ points: withUtcTimes(response.data) });
   },
 };

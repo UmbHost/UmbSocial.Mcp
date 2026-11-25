@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { PagedPostTemplateViewModel, PostTemplateView } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { toUtcIso } from "../../../../session/time.js";
 import { enabledFor, NEEDS_WRITE } from "../../social/shared.js";
 import { NEEDS_PRO, pageOf } from "../shared.js";
@@ -74,7 +74,7 @@ const listTemplatesTool: ToolDefinition<typeof inputSchema, typeof outputSchema>
   enabled: enabledFor(["Write"]),
   handler: async ({ filter, documentTypeKey, skip, take }) => {
     const params = { filter, documentType: documentTypeKey, ...pageOf(skip, take, PAGE_SIZE, MAX_TAKE) };
-    const response = await callSocial<PagedPostTemplateViewModel>((api, raw) => api.listTemplates(params, raw));
+    const response = await callPro<PagedPostTemplateViewModel>((api, raw) => api.listTemplates(params, raw));
     return createToolResult({ items: response.data.items.map(toItem), total: response.data.total });
   },
 };

@@ -58,14 +58,11 @@ afterEach(() => {
 
 describe("destructive tools", () => {
   it("every_destructive_tool_is_marked_and_takes_confirm", () => {
-    const destructive = collections
-      .flatMap((c) => c.tools(undefined))
-      .filter((t) => t.annotations?.destructiveHint === true)
-      .map((t) => t.name)
-      .sort();
+    const destructive = collections.flatMap((c) => c.tools(undefined)).filter((t) => t.annotations?.destructiveHint === true);
 
-    expect(destructive).toEqual(Object.keys(CASES).sort());
-    for (const { tool } of Object.values(CASES)) {
+    // The rest are asked about in src/__tests__/parity-tools.test.ts.
+    expect(destructive.map((t) => t.name)).toEqual(expect.arrayContaining(Object.keys(CASES)));
+    for (const tool of destructive) {
       const confirm = (tool.inputSchema as Record<string, { safeParse: (v: unknown) => { success: boolean } }>).confirm;
       expect({ name: tool.name, has: confirm !== undefined }).toEqual({ name: tool.name, has: true });
       expect(confirm!.safeParse(true).success).toBe(true);

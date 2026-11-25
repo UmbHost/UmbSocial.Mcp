@@ -20,7 +20,9 @@ The site enforces it; this server must never work around it or suggest otherwise
 - Every post an API user creates or edits is AI-written (origin `Ai`), and an API user never counts as a reviewer. A person must review an AI-written post before it goes on the calendar.
 - Writing tools save drafts. No tool result tells the assistant to retry with a different `when`, or to publish, after an `ai.needs_review` refusal.
 - Every tool that writes post text carries the AI-written notice in its description.
-- The `approve` and `resolve` slices are off unless `UMBSOCIAL_ENABLE_SLICES` names them.
+- The `approve`, `resolve`, `manage` and `settings` slices are off unless `UMBSOCIAL_ENABLE_SLICES` names them.
+- `create-content-automation` never offers the Queue mode, and the tools that use AI on a post, or change how it goes out, take only a draft or a post awaiting approval.
+- **Parity:** every operation in the API description has a tool, or a reason in `src/__tests__/parity.test.ts`. An add-on's tools register only when `src/session/addons.ts` finds it usable.
 - The server holds no Social or Pro business logic: it's a thin client, and the site decides permissions, review and licensing.
 
 ## Safety

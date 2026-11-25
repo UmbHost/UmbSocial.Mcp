@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { PostTemplateView } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { withUtcTimes } from "../../../../session/time.js";
 import { enabledFor, NEEDS_WRITE } from "../../social/shared.js";
 import { NEEDS_PRO } from "../shared.js";
@@ -40,7 +40,7 @@ const getTemplateTool: ToolDefinition<typeof inputSchema, typeof outputSchema> =
   outputSchema,
   enabled: enabledFor(["Write"]),
   handler: async ({ templateKey }) => {
-    const response = await callSocial<PostTemplateView>((api, raw) => api.getTemplate(templateKey, raw));
+    const response = await callPro<PostTemplateView>((api, raw) => api.getTemplate(templateKey, raw));
     // Who made it is a user key nothing here takes.
     const { createdByUserKey: _createdBy, ...template } = response.data;
     return createToolResult(withUtcTimes(template));

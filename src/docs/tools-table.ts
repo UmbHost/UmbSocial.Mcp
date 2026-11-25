@@ -18,7 +18,7 @@ import { ALL_VERBS, SOCIAL_SECTION, type SocialVerb } from "../session/social-us
 export const TOOLS_TABLE_PATH = "docs/tools-table.md";
 export const REFUSAL_HINTS_PATH = "docs/refusal-hints.md";
 
-const PRO_COLLECTION = "social-pro";
+const EDITIONS: Readonly<Record<string, string>> = { "social-pro": "Pro", "social-ai": "Pro + AI", "social-engage": "Pro + Engage" };
 
 const VERB_LABELS: Readonly<Record<SocialVerb, string>> = {
   View: "View",
@@ -38,9 +38,15 @@ const inList = (items: readonly string[]) =>
 /** The verbs any one of which lets a user see the tool; the section alone when it has no check. */
 function verbsOf(tool: ToolDefinition<any, any>): string {
   if (!tool.enabled) return "Social section";
-  const verbs = ALL_VERBS.filter((verb) =>
-    tool.enabled!({ allowedSections: [SOCIAL_SECTION], fallbackPermissions: [`UmbSocial.${verb}`] }),
-  );
+  const allows = (verbs: readonly SocialVerb[]) =>
+    tool.enabled!({ allowedSections: [SOCIAL_SECTION], fallbackPermissions: verbs.map((verb) => `UmbSocial.${verb}`) });
+  const verbs = ALL_VERBS.filter((verb) => allows([verb]));
+  // None alone is enough: the verbs it needs together are the ones it can't do without.
+  if (verbs.length === 0) {
+    return ALL_VERBS.filter((verb) => !allows(ALL_VERBS.filter((other) => other !== verb)))
+      .map((verb) => VERB_LABELS[verb])
+      .join(" and ");
+  }
   return inList(verbs.map((verb) => VERB_LABELS[verb]));
 }
 
@@ -78,7 +84,7 @@ export function renderToolsTable(collections: readonly ToolCollectionExport[]): 
       const hints = [summary.readOnly ? "read-only" : "", summary.destructive ? "destructive" : ""].filter(Boolean).join(", ");
       lines.push(
         `| \`${summary.name}\` | ${cell(firstSentence(tool.description))} | ${verbsOf(tool)} | ${slicesOf(summary.slices)} | ${
-          collectionName === PRO_COLLECTION ? "Pro" : "Any"
+          EDITIONS[collectionName] ?? "Any"
         } | ${hints || "–"} | ${inputsOf(tool)} |`,
       );
     }
