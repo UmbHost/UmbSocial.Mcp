@@ -4,6 +4,7 @@
  */
 
 import type { EditionResponse } from "../umbraco-api/api/generated/umbSocialApi.js";
+import { gateAddOn } from "./addons.js";
 import { callSocial } from "./refusals.js";
 
 export interface Edition {
@@ -39,7 +40,7 @@ export function clearEdition(): void {
   edition = null;
 }
 
-/** Pro's tools: none when the site was read as unlicensed. */
+/** Pro's tools: none when the site was read as unlicensed, or without a usable UmbSocial.Pro. */
 export function gatePro<T>(tools: T[], read: Edition | null = currentEdition()): T[] {
-  return read && !read.isLicensed ? [] : tools;
+  return read && !read.isLicensed ? [] : gateAddOn("pro", tools);
 }

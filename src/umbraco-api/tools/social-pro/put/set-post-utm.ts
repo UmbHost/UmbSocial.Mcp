@@ -8,7 +8,7 @@
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { PostResponse, PostUtmModel } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { assertEditable } from "../../social/post-request.js";
 import { enabledFor, NEEDS_WRITE } from "../../social/shared.js";
 import { NEEDS_PRO } from "../shared.js";
@@ -49,10 +49,10 @@ const setPostUtmTool: ToolDefinition<typeof inputSchema, typeof utmOutputSchema>
   enabled: enabledFor(["Write"]),
   handler: async ({ key, ...changes }) => {
     // A post on the calendar is left as a person left it: the values are read when it goes out.
-    const post = await callSocial<PostResponse>((api, raw) => api.getPost(key, raw));
+    const post = await callPro<PostResponse>((api, raw) => api.getPost(key, raw));
     assertEditable(post.data);
 
-    const read = await callSocial<PostUtmModel>((api, raw) => api.getPostUtm(key, raw));
+    const read = await callPro<PostUtmModel>((api, raw) => api.getPostUtm(key, raw));
     const locked = await lockedUtmFields();
     // A value given for a locked field is still sent, so the site refuses it by name.
     const merged = (field: UtmField) =>
@@ -63,7 +63,7 @@ const setPostUtmTool: ToolDefinition<typeof inputSchema, typeof utmOutputSchema>
       content: merged("content"),
       disabled: changes.disabled ?? read.data.disabled,
     };
-    const response = await callSocial<PostUtmModel>((api, raw) => api.savePostUtm(key, request, raw));
+    const response = await callPro<PostUtmModel>((api, raw) => api.savePostUtm(key, request, raw));
     return createToolResult(toUtm(response.data, locked));
   },
 };

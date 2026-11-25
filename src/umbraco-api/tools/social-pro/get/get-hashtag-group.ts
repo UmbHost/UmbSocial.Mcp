@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { HashtagGroupView } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { HASHTAGS_READ } from "../../../../session/social-user.js";
 import { withUtcTimes } from "../../../../session/time.js";
 import { enabledFor } from "../../social/shared.js";
@@ -37,7 +37,7 @@ const getHashtagGroupTool: ToolDefinition<typeof inputSchema, typeof outputSchem
   outputSchema,
   enabled: enabledFor(HASHTAGS_READ),
   handler: async ({ hashtagGroupKey }) => {
-    const response = await callSocial<HashtagGroupView>((api, raw) => api.getHashtagGroup(hashtagGroupKey, raw));
+    const response = await callPro<HashtagGroupView>((api, raw) => api.getHashtagGroup(hashtagGroupKey, raw));
     return createToolResult(withUtcTimes(response.data));
   },
 };

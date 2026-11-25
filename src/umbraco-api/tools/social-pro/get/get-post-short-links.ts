@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { PostShortLink } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { enabledFor } from "../../social/shared.js";
 import { NEEDS_PRO } from "../shared.js";
 
@@ -39,7 +39,7 @@ const getPostShortLinksTool: ToolDefinition<typeof inputSchema, typeof outputSch
   outputSchema,
   enabled: enabledFor(["View"]),
   handler: async ({ key }) => {
-    const response = await callSocial<PostShortLink[]>((api, raw) => api.getPostShortLinks(key, raw));
+    const response = await callPro<PostShortLink[]>((api, raw) => api.getPostShortLinks(key, raw));
     return createToolResult({ items: response.data });
   },
 };

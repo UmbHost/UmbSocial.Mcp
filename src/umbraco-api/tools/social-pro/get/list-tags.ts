@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { PagedPostTagViewModel } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { READ } from "../../../../session/social-user.js";
 import { enabledFor, NEEDS_READ } from "../../social/shared.js";
 import { NEEDS_PRO, pageOf } from "../shared.js";
@@ -43,7 +43,7 @@ const listTagsTool: ToolDefinition<typeof inputSchema, typeof outputSchema> = {
   enabled: enabledFor(READ),
   handler: async ({ filter, skip, take }) => {
     const params = { filter, ...pageOf(skip, take, PAGE_SIZE, MAX_TAKE) };
-    const response = await callSocial<PagedPostTagViewModel>((api, raw) => api.listTags(params, raw));
+    const response = await callPro<PagedPostTagViewModel>((api, raw) => api.listTags(params, raw));
     return createToolResult({
       items: response.data.items.map(({ key, name, colour, postCount }) => ({ key, name, colour, postCount })),
       total: response.data.total,

@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { PostFromTemplate, PostFromTemplateRequest } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { AI_WRITTEN_NOTICE } from "../../../../session/notices.js";
 import { enabledFor } from "../../social/shared.js";
 import { NEEDS_PRO } from "../shared.js";
@@ -37,7 +37,7 @@ const createPostFromTemplateTool: ToolDefinition<typeof inputSchema, typeof outp
   enabled: enabledFor(["Write"]),
   handler: async ({ templateKey, pageKey, pageCulture }) => {
     const request: PostFromTemplateRequest = pageKey ? { sourceContentKey: pageKey, sourceCulture: pageCulture ?? null } : {};
-    const response = await callSocial<PostFromTemplate>((api, raw) => api.createPostFromTemplate(templateKey, request, raw));
+    const response = await callPro<PostFromTemplate>((api, raw) => api.createPostFromTemplate(templateKey, request, raw));
     // The site always saves it as a draft (`PostTemplateService.CreatePostAsync`).
     return createToolResult({ key: response.data.key, version: response.data.version, status: "Draft" as const });
   },

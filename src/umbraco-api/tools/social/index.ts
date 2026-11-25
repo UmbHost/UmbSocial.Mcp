@@ -17,6 +17,10 @@ import getNextFreeSlot from "./get/get-next-free-slot.js";
 import listCampaigns from "./get/list-campaigns.js";
 import getPageShare from "./get/get-page-share.js";
 import previewLink from "./get/preview-link.js";
+import { getMediaLink, getPageLink, getPostingStreak } from "./get/links-and-streak.js";
+import { campaignTools } from "./manage/campaigns.js";
+import { channelSettingTools } from "./settings/channels.js";
+import { siteSettingTools } from "./settings/site.js";
 import checkPost from "./post/check-post.js";
 import createPost from "./post/create-post.js";
 import createCampaign from "./post/create-campaign.js";
@@ -46,6 +50,12 @@ const tools: ToolDefinition<any, any>[] = [
   previewLink,
   retryPostTarget,
   markPostTargetPublished,
+  getPageLink,
+  getMediaLink,
+  getPostingStreak,
+  ...campaignTools,
+  ...channelSettingTools,
+  ...siteSettingTools,
 ];
 
 export const socialCollection: ToolCollectionExport<CurrentUser | undefined> = {

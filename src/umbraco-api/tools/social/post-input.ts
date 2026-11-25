@@ -35,6 +35,25 @@ const channelOptions = z
   })
   .describe("Only what the channel's network supports (see list-channels' limits.options); anything else is refused.");
 
+const pageLinks = z
+  .array(
+    z.object({
+      url: z.string().min(1).describe(raw("The address exactly as it is in the text or the link, from get-page-link.")),
+      pageKey: z.guid().describe("The page it leads to."),
+      pageCulture: z.string().max(20).nullish().describe("The page's language, for a page that varies by language."),
+    }),
+  )
+  .max(50);
+
+const fraction = z.number().min(0).max(1);
+const imageFraming = z.object({
+  focalPoint: z.object({ left: fraction, top: fraction }).nullish().describe("Where the subject is, as fractions from the top left."),
+  crops: z
+    .array(z.object({ network: z.string(), left: fraction, top: fraction, right: fraction, bottom: fraction }))
+    .max(20)
+    .describe("A network's own crop: how much to trim from each side, as fractions of the width or height. One each at most."),
+});
+
 export type ChannelOptionsInput = z.infer<typeof channelOptions>;
 
 const createShape = {
@@ -56,6 +75,10 @@ const createShape = {
     .describe(raw("The link card's image (https): take it from preview-link's imageUrl for the same link.")),
   mediaKey: z.guid().optional().describe("The image, a media key from the cms media tools."),
   imageAltText: z.string().optional().describe(raw("The image's alt text.")),
+  imageFraming: imageFraming.optional().describe("How the image is framed for each network; the centre when left out."),
+  pageLinks: pageLinks
+    .optional()
+    .describe("Links to the site's own pages that follow the page if it moves: each address in the text or linkUrl with its page. Get the address from get-page-link."),
   campaignKey: z.guid().optional().describe("The campaign, from list-campaigns or create-campaign."),
   pageKey: z
     .guid()
@@ -87,8 +110,10 @@ export const postUpdateShape = {
     .nullable()
     .optional()
     .describe(raw("The link card's image (https), from preview-link's imageUrl for the same link; null removes it.")),
-  mediaKey: z.guid().nullable().optional().describe("The image, a media key from the cms media tools; null removes it. A new image clears the old alt text and crops."),
+  mediaKey: z.guid().nullable().optional().describe("The image, a media key from the cms media tools; null removes it. A new image clears the old alt text and crops unless they are given too."),
   imageAltText: z.string().nullable().optional().describe(raw("The image's alt text; null removes it.")),
+  imageFraming: imageFraming.nullable().optional().describe("How the image is framed for each network; null removes it, and left out it is kept unless the image changes."),
+  pageLinks: pageLinks.optional().describe("Replaces the links that follow a page; an empty list removes them. Left out, they are kept."),
   campaignKey: z.guid().nullable().optional().describe("The campaign, from list-campaigns or create-campaign; null removes it."),
   pageKey: z
     .guid()
@@ -111,6 +136,8 @@ export interface PostInputArgs {
   linkImageUrl?: string | null;
   mediaKey?: string | null;
   imageAltText?: string | null;
+  imageFraming?: z.infer<typeof imageFraming> | null;
+  pageLinks?: z.infer<typeof pageLinks>;
   campaignKey?: string | null;
   pageKey?: string | null;
   pageCulture?: string | null;

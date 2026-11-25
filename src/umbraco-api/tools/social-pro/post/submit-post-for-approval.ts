@@ -5,7 +5,7 @@
 import { z } from "zod";
 import { createToolResult, withStandardDecorators, type ToolDefinition } from "@umbraco-cms/mcp-server-sdk";
 import type { PostKeyResponse } from "../../../api/generated/umbSocialApi.js";
-import { callSocial } from "../../../../session/refusals.js";
+import { callPro } from "../../../../session/addons.js";
 import { enabledFor, NEEDS_WRITE } from "../../social/shared.js";
 import { NEEDS_PRO } from "../shared.js";
 
@@ -33,7 +33,7 @@ const submitPostForApprovalTool: ToolDefinition<typeof inputSchema, typeof outpu
   outputSchema,
   enabled: enabledFor(["Write"]),
   handler: async ({ key }) => {
-    const response = await callSocial<PostKeyResponse>((api, raw) => api.submitPost(key, raw));
+    const response = await callPro<PostKeyResponse>((api, raw) => api.submitPost(key, raw));
     return createToolResult({ key: response.data.key, version: response.data.version, status: "AwaitingApproval" as const });
   },
 };
